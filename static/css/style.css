@@ -1,0 +1,175 @@
+/* Importando a fonte Apricots local */
+@font-face {
+    font-family: 'Apricots';
+    src: url('/static/fonts/Apricotsy Demo.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+/* Fonte padrão para o corpo */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #e1e2e3; /* light background do Bootstrap */
+    color: #363b40;
+}
+
+/* Títulos com a fonte Apricots */
+h1, h2, h3 {
+    font-family: 'Apricots', cursive;
+    color: #363b40;
+}
+
+/* Cores temáticas */
+.tag-transport     { background-color: #007bff; color: white; }  /* Azul */
+.tag-accommodation { background-color: #6f42c1; color: white; }  /* Roxo */
+.tag-things        { background-color: #fd7e14; color: white; }  /* Laranja */
+.tag-food          { background-color: #28a745; color: white; }  /* Verde */
+
+/* Cards de viagem */
+.card-trip {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* Espaçamento personalizado se necessário */
+.mt-6 { margin-top: 4rem; }
+.mb-6 { margin-bottom: 4rem; }
+
+.cover-header {
+  position: relative;
+  margin-bottom: 3rem;
+}
+
+.cover-header img {
+  width: 100%;
+  max-height: 350px;
+  object-fit: cover;
+  border-radius: 4rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.cover-title {
+  position: absolute;
+  bottom: -100px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: #ff914d;
+  font-family: 'Apricots', cursive;
+  font-size: 9rem;
+  text-shadow: 2px 1px 3px rgba(0,0,0,0.3);
+  line-height: 0.7; /* 🔧 isso aqui reduz a altura entre as linhas */
+  pointer-events: none;
+}
+
+#trip-scroll-container {
+  scroll-behavior: smooth;
+}
+#trip-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+.trip-card {
+  flex: 0 0 auto;
+}
+.trip-card {
+  width: 200px;             /* Ou ajuste conforme quiser */
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  margin: 0 10px;
+  transition: transform 0.3s ease;
+}
+
+.trip-card:hover {
+  transform: scale(1.03);
+}
+
+.trip-img {
+  height: 70%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.flag-frame {
+  width: 32px;
+  height: 32px;
+  border-radius: 30%;
+  overflow: hidden;
+  display: flex; /* 🔥 Centraliza com flexbox */
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.flag-frame img {
+  width: auto; /* 🔥 Deixa a largura automática */
+  height: 140%; /* 🔥 Aumenta a altura para cobrir bem o círculo */
+  object-fit: cover;
+  object-position: center; /* 🔥 Centraliza perfeitamente */
+}
+
+.trip-day {
+  background-color: #e74c3c !important;
+  color: white !important;
+  border-radius: 6px;
+  position: relative;
+}
+#calendar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  #calendar {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  #calendar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+  .offcanvas.show ~ .content-wrapper {
+    margin-right: 300px; /* ajuste conforme largura do drawer */
+    transition: margin 0.3s ease;
+  }
+
+  .custom-table-title {
+  color: #145480; /* Laranja, por exemplo */
+}
+.activity-card {
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+.activity-transportation {
+    background-color: #007bff;
+    color: white;
+    border-left: 5px solid #2196f3;
+}
+
+
+
+
+
+
+
+
+
+
+
+.form-switch .form-check-input:checked {
+    background-color: #000;  /* preto */
+    border-color: #000;
+}
+
+/* opcional: mudar a "bolinha" do switch */
+.form-switch .form-check-input {
+    box-shadow: none;
+}

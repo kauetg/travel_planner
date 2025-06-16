@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Trip Planner{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- 📷 Cover Image with Overlaid Title -->
+    <div class="cover-header">
+        <img src="{{ url_for('static', filename='img/splashphoto-7856.jpg') }}">
+
+        <!-- Texto dentro da largura do container -->
+        <div class="position-absolute top-35 start-50 translate-middle-x text-center px-3" style="width: 100%;">
+            <h1 class="cover-title">
+                Trip Planner
+            </h1>
+        </div>
+    </div>
+    <h4 class="text-end fst-italic text-muted small  me-3 d-none d-lg-block" style="margin-top: -2rem;">
+        by BK adventures
+    </h4>
+    <!-- Distância fake pra compensar o título sobreposto -->
+    <div style="height:80px;"></div>
+
+
+    <!--</div>-->
+    <div class="text-center mb-5">
+        <button class="btn btn-primary btn-lg rounded-5 px-5 shadow" data-bs-toggle="modal"
+                data-bs-target="#addTripModal">
+            + Add New Trip
+        </button>
+    </div>
+
+    <!-- Modal Bootstrap -->
+    <div class="modal fade" id="addTripModal" tabindex="-1" aria-labelledby="addTripModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" enctype="multipart/form-data" action="{{ url_for('home.add_trip') }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addTripModalLabel">Add New Trip</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        {% include "_trip_form.html" %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Trip</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 🎠 Carousel -->
+    <div class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0">Our Trips</h2>
+            <div>
+                <button class="btn btn-outline-secondary btn-sm me-2" onclick="scrollTrips('left')">‹</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="scrollTrips('right')">›</button>
+            </div>
+        </div>
+
+        <div id="trip-scroll-container" class="d-flex overflow-auto gap-4 pb-2">
+
+            {% for trip in trips %}
+            <a href="{{ url_for('trip.view_trip', trip_id=trip._id) }}" class="text-decoration-none text-dark">
+                <div class="trip-card bg-light rounded-4 shadow-sm p-3 text-center d-flex flex-column justify-content-between">
+                    <img src="{{ trip.img | safe }}" alt="Trip Image"
+                         class="rounded-4 mb-2 trip-img">
+                    <h4 class="fw-bold mb-1" style="font-family: 'Apricots', cursive;">
+                        {{ trip.name }}
+                    </h4>
+                    <div class="d-flex justify-content-between align-items-center w-100 px-2">
+                        <p class="text-muted small mb-0">{{ trip.start_date.strftime("%b-%Y") }}</p>
+                        <div class="flag-frame">
+                            <img src="https://flagsapi.com/{{ trip.country_code }}/flat/64.png"
+                                 alt="{{ trip.country_name }} Flag"
+                                 class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+
+    <div class="d-flex justify-content-center align-items-center mb-4" id="yearNavigator">
+        <button id="prevYear" class="btn btn-outline-secondary btn-sm me-5">&lt;</button>
+        <h1 class="m-0" id="calendarTitle"><strong id="currentYear">2025</strong></h1>
+        <button id="nextYear" class="btn btn-outline-secondary btn-sm ms-5">&gt;</button>
+    </div>
+
+    <!-- 🗓 Calendar + 🗺 Map -->
+    <div class="row gy-4">
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 shadow">
+                <div class="card-body">
+                    <h3 class="card-title" id="calendar_title">All Trips</h3>
+                    <div id="calendar" class="mt-5"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 shadow">
+                <div class="card-body">
+                    <h3 class="card-title">Trip Map</h3>
+
+                    <div id="map" style="height: 500px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+    const trips = {{ trips_json | safe }};
+</script>
+
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/map_home.js') }}"></script>
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+
+
+{% endblock %}

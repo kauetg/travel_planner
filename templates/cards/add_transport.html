@@ -1,0 +1,59 @@
+{% extends "base_add_card.html" %}
+
+{% block card_content %}
+<div class="activity-card activity-transportation">
+    <!-- conteúdo do card -->
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-2">
+            {{ form.title.label(class="form-label") }}
+            {{ form.title(class="form-control") }}
+        </div>
+
+        <div class="mb-2">
+            {{ form.departure.label(class="form-label") }}
+            {{ form.departure(class="form-control") }}
+        </div>
+
+        <div class="mb-2">
+            {{ form.arrival.label(class="form-label") }}
+            {{ form.arrival(class="form-control") }}
+        </div>
+
+        <div class="mb-2">
+            {{ form.cost.label(class="form-label") }}
+            <div class="row">
+                <div class="col-6">
+                    {{ form.currency(class="form-select") }}
+                </div>
+                <div class="col-6">
+                    {{ form.cost(class="form-control", min="0", step="0.01", placeholder="12.50") }}
+                </div>
+
+            </div>
+        </div>
+
+        <div class="mb-2">
+            {{ form.duration.label(class="form-label") }}
+            {{ form.duration(class="form-control", min="0", placeholder="in hours") }}
+        </div>
+
+        <div class="mb-2">
+            {{ form.type.label(class="form-label") }}
+            {{ form.type(class="form-select") }}
+        </div>
+
+        <div class="form-check form-switch mb-2">
+            {{ form.confirmed(class="form-check-input") }}
+            {{ form.confirmed.label(class="form-check-label") }}
+        </div>
+
+        <div class="mt-3 text-end">
+            <button type="submit" class="btn btn-light">Add</button>
+        </div>
+
+
+    </form>
+</div>
+{% endblock %}

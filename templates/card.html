@@ -1,0 +1,32 @@
+<div class="activity-card activity-{{ card.category | lower | replace(' ', '-') }}">
+  <h5 class="activity-title text-white text-center py-2">{{ card.title }}</h5>
+
+  <div class="activity-image mx-2">
+    <img src="{{ card.image_url }}" class="img-fluid rounded-3" alt="Activity Image">
+  </div>
+
+  <div class="activity-details text-white px-3 py-2">
+    {% if card.departure %}
+      <div><strong>Departure:</strong> {{ card.departure }}</div>
+    {% endif %}
+    {% if card.arrival %}
+      <div><strong>Arrival:</strong> {{ card.arrival }}</div>
+    {% endif %}
+    {% if card.type %}
+      <div><strong>Type:</strong> {{ card.type }}</div>
+    {% endif %}
+    {% if card.cost %}
+      <div><strong>Cost:</strong> ${{ card.cost }}</div>
+    {% endif %}
+    {% if card.duration %}
+      <div><strong>Duration:</strong> {{ card.duration }}</div>
+    {% endif %}
+
+    <div class="form-check mt-2">
+      <input class="form-check-input" type="checkbox" value="" id="confirmCheck{{ loop.index }}" {% if card.confirmed %}checked{% endif %}>
+      <label class="form-check-label" for="confirmCheck{{ loop.index }}">
+        Confirmed
+      </label>
+    </div>
+  </div>
+</div>

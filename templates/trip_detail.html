@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Trip Planner{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- 📷 Cover Image with Overlaid Title -->
+    <div class="cover-header position-relative">
+        <img src="{{ trip.img | safe }}" class="img-fluid rounded-4 w-100">
+
+        <!-- Texto centralizado sobre a imagem -->
+        <div class="position-absolute top-35 start-50 translate-middle-x text-center px-3" style="width: 100%;">
+            <h1 class="cover-title">{{ trip.name }}</h1>
+        </div>
+    </div>
+
+    <!-- byline abaixo da imagem -->
+    <h4 class="text-end fst-italic text-muted small me-3 d-none d-lg-block" style="margin-top: -2rem;">
+        by BK adventures
+    </h4>
+
+    <!-- Fake spacing para compensar o overlay -->
+    <div style="height:80px;"></div>
+
+    <!-- 🟦 Painel 1 - Organizer Table -->
+    <div class="panel p-4 mb-4 bg-light rounded-4 shadow-sm">
+        <h2 class="mb-3">📋 Organizer</h2>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <p class="text-muted mb-0">A table view of your daily plan, with drag-and-drop activities.</p>
+
+            <button class="btn btn-secondary" type="button" data-bs-toggle="offcanvas" data-bs-target="#drawerPanel"
+                    aria-controls="drawerPanel">
+                Edit
+            </button>
+        </div>
+
+        <!-- Drawer lateral -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="drawerPanel" aria-labelledby="drawerPanelLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="drawerPanelLabel">Edit Activities</h5>
+                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"
+                        aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div class="accordion" id="drawerAccordion">
+                    {% for category in categories %}
+                    <div class="accordion-item mb-2">
+                        <h4 class="accordion-header" id="heading{{ loop.index }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapse{{ loop.index }}" aria-expanded="false"
+                                    aria-controls="collapse{{ loop.index }}">
+                                {{ category.label }}
+                            </button>
+                        </h4>
+                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse"
+                             aria-labelledby="heading{{ loop.index }}" data-bs-parent="#drawerAccordion">
+                            <div class="accordion-body">
+                                <div id="card-list-{{ category.category|lower|replace(' ', '-') }}">
+                                    <!-- Activity cards will go here -->
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary mt-2 w-100"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#activityModal"
+                                        data-category="{{ category.category | lower | replace(' ', '_') }}"
+                                        data-label="{{ category.label }}"
+                                        data-icon="{{ category.icon }}">
+                                    + Add {{ category.label }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <hr>
+                <div class="d-grid gap-2 mt-3">
+                    <button class="btn btn-outline-secondary">✏️ Edit Trip Info</button>
+                    <button class="btn btn-outline-secondary">📸 Instagram Link</button>
+                    <button class="btn btn-outline-secondary">🎥 YouTube Link</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela do Planner -->
+        <div class="content-wrapper">
+            <div class="table-responsive mt-4">
+                <table class="table table-bordered text-center align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th class="bg-light text-center">Day</th>
+                        {% for i in range(1, trip.dates|length + 1) %}
+                        <th>{{ i }}</th>
+                        {% endfor %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for cat in categories %}
+                    <tr>
+                        <th class="bg-light align-middle text-center text-md-start">
+                            <!-- Ícone (sempre visível, centralizado em telas pequenas) -->
+                            <i class="bi {{ cat.icon }} me-2 d-inline d-md-inline text-center custom-icon custom-table-title"></i>
+                            <!-- Texto da categoria (escondido em telas pequenas) -->
+                            <span class="d-none d-md-inline custom-table-title">{{ cat.label }}</span>
+                        </th>
+
+                        {% for date in trip.dates %}
+                        <td data-date="{{ date }}" data-category="{{ cat.category }}" class="planner-cell"></td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tr class="bg-white text-muted small">
+
+                        <th class="bg-light align-middle text-center text-md-start">
+                            <i class="bi bi-calendar-date-fill me-2 d-inline d-md-inline text-center custom-table-title"></i>
+                            <span class="d-none d-md-inline custom-table-title">Date</span>
+                        </th>
+                        {% for date in trip.dates_formatted %}
+                        <td class="text-center">{{ date }}</td>
+                        {% endfor %}
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- 🗺️ Painel 2 - Mapa com seletor de dias -->
+        <div class="panel p-4 mb-4 bg-light rounded-4 shadow-sm">
+            <h2 class="mb-3">🗺️ Map & Days</h2>
+            <p class="text-muted">Select a day to explore locations on the map.</p>
+            <!-- TODO: seletor de dias + mapa -->
+            <div style="min-height: 300px; border: 1px dashed #ccc;" class="rounded p-3">Mapa vai aqui</div>
+        </div>
+
+        <!-- 💸 Painel 3 - Finanças -->
+        <div class="panel p-4 mb-4 bg-light rounded-4 shadow-sm">
+            <h2 class="mb-3">💸 Finances</h2>
+            <p class="text-muted">Track your trip spending by day and category.</p>
+            <!-- TODO: tabs com gastos -->
+            <div style="min-height: 200px; border: 1px dashed #ccc;" class="rounded p-3">Finanças vão aqui</div>
+        </div>
+
+    </div>
+    <div class="modal fade bd-example-modal-sm" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="activityModalLabel">Add Activity</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modal-body-content">
+                    <!-- Form will be loaded here -->
+                    <div class="text-center text-muted py-3">
+                        <div class="spinner-border" role="status"></div>
+                        <p>Loading form...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            const modal = document.getElementById("activityModal");
+            modal.addEventListener("show.bs.modal", (event) => {
+    const button = event.relatedTarget;
+    const category = button.getAttribute("data-category");
+    const label = button.getAttribute("data-label");
+    const icon = button.getAttribute("data-icon")
+    const tripId = "{{ trip._id }}";  // Disponível no template
+
+    const url = `/trip/${tripId}/add_${category}`;
+    const modalBody = document.getElementById("modal-body-content");
+
+    modalBody.innerHTML = '<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
+
+    const modalTitle = document.getElementById("activityModalLabel");
+    modalTitle.innerText = label + icon
+
+    fetch(url)
+      .then((response) => response.text())
+      .then((html) => {
+        modalBody.innerHTML = html;
+      })
+      .catch(() => {
+        modalBody.innerHTML = "<p class='text-danger'>Failed to load form. Try again.</p>";
+      });
+  });
+});
+    </script>
+
+    <script src="{{ url_for('static', filename='js/planner.js') }}"></script>
+
+
+    {% endblock %}
