@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, current_app, request, redirect, url_for
 from bson import ObjectId
 from datetime import datetime
+from .utils import convert_to_USD
 
 from .forms import TransportForm, AccommodationForm, ActivityForm, FoodForm
 
@@ -31,22 +32,26 @@ def add_transport(trip_id):
         if not trip:
             return "Trip not found", 404
 
-        form = TransportForm()
+        form = TransportForm(trip=trip)
+        cost=float(form.cost.data) if form.cost.data else 0.0
+        currency = form.currency.data
+
+
         if form.validate_on_submit():
             new_activity = {
                 "id": str(ObjectId()),
-                "category": form.category.data,
+                "category": 'transportation',
                 "title": form.title.data,
                 "confirmed": form.confirmed.data,
                 "departure": form.departure.data,
                 "arrival": form.arrival.data,
-                "photo": form.photo.data,
-                "cost": float(form.cost.data) if form.cost.data else 0.0,
-                "currency": form.currency.data,
+                "cost": cost,
+                "currency": currency,
+                "cost_in_USD": convert_to_USD(cost,currency),
                 "duration": form.duration.data,
             }
             db.trips.update_one({"_id": ObjectId(trip_id)}, {"$push": {"activities": new_activity}})
-            return redirect(url_for("trip_detail", trip_id=trip_id))
+            return redirect(url_for("trip.view_trip", trip_id=trip_id))
 
         return render_template("cards/add_transport.html", form=form, trip=trip)
 
@@ -61,21 +66,26 @@ def add_accommodation(trip_id):
     if not trip:
         return "Trip not found", 404
 
-    form = AccommodationForm()
+    form = AccommodationForm(trip=trip)
+    cost = float(form.cost.data) if form.cost.data else 0.0
+    currency = form.currency.data
+    photo=""
+
     if form.validate_on_submit():
         new_activity = {
             "id": str(ObjectId()),
-            "category": form.category.data,
+            "category": "accommodation",
             "title": form.title.data,
-            "confirmed": form.confirmed.data,
             "address": form.address.data,
-            "photo": form.photo.data,
-            "cost": float(form.cost.data) if form.cost.data else 0.0,
-
+            "confirmed": form.confirmed.data,
+            "photo": photo,
+            "cost": cost,
+            "currency": currency,
+            "cost_in_USD": convert_to_USD(cost, currency),
             "duration": form.duration.data,
         }
         db.trips.update_one({"_id": ObjectId(trip_id)}, {"$push": {"activities": new_activity}})
-        return redirect(url_for("trip_detail", trip_id=trip_id))
+        return redirect(url_for("trip.view_trip", trip_id=trip_id))
 
     return render_template("cards/add_accommodation.html", form=form, trip=trip)
 
@@ -88,21 +98,27 @@ def add_activity(trip_id):
     if not trip:
         return "Trip not found", 404
 
-    form = ActivityForm()
+    form = ActivityForm(trip=trip)
+    photo=""
+    cost = float(form.cost.data) if form.cost.data else 0.0
+    currency = form.currency.data
+
     if form.validate_on_submit():
         new_activity = {
             "id": str(ObjectId()),
-            "category": form.category.data,
+            "category":"activity",
             "title": form.title.data,
             "confirmed": form.confirmed.data,
             "address": form.address.data,
-            "photo": form.photo.data,
-            "cost": float(form.cost.data) if form.cost.data else 0.0,
+            "photo": photo,
+            "cost": cost,
+            "currency": currency,
+            "cost_in_USD": convert_to_USD(cost, currency),
             "type": form.type.data,
             "obs": form.obs.data,
         }
         db.trips.update_one({"_id": ObjectId(trip_id)}, {"$push": {"activities": new_activity}})
-        return redirect(url_for("trip_detail", trip_id=trip_id))
+        return redirect(url_for("trip.view_trip", trip_id=trip_id))
 
     return render_template("cards/add_activity.html", form=form, trip=trip)
 
@@ -114,20 +130,38 @@ def add_food(trip_id):
     if not trip:
         return "Trip not found", 404
 
-    form = FoodForm()
+    form = FoodForm(trip=trip)
+    cost = float(form.cost.data) if form.cost.data else 0.0
+    currency = form.currency.data
+    photo = ""
     if form.validate_on_submit():
         new_activity = {
             "id": str(ObjectId()),
-            "category": form.category.data,
+            "category": "food",
             "title": form.title.data,
             "confirmed": form.confirmed.data,
             "address": form.address.data,
-            "photo": form.photo.data,
-            "cost": float(form.cost.data) if form.cost.data else 0.0,
+            "photo": photo,
+            "currency": currency,
+            "cost": cost,
+            "cost_in_USD": convert_to_USD(cost, currency),
             "type": form.type.data,
             "obs": form.obs.data,
         }
         db.trips.update_one({"_id": ObjectId(trip_id)}, {"$push": {"activities": new_activity}})
-        return redirect(url_for("trip_detail", trip_id=trip_id))
+        return redirect(url_for("trip.view_trip", trip_id=trip_id))
 
     return render_template("cards/add_food.html", form=form, trip=trip)
+
+@trip_bp.route("/<trip_id>/activity/<activity_id>")
+def view_activity(trip_id, activity_id):
+    db = current_app.db
+    trip = db.trips.find_one({"_id": ObjectId(trip_id)})
+    if not trip:
+        return "Trip not found", 404
+
+    activity = next((a for a in trip.get("activities", []) if a["id"] == activity_id), None)
+    if not activity:
+        return "Activity not found", 404
+
+    return render_template("cards/view_activity.html", activity=activity)

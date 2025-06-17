@@ -1,0 +1,42 @@
+<div class="activity-card tag-{{ activity.category }}">
+    <!-- Imagem da atividade -->
+    <div class="activity-photo-container">
+        {% set photo_url = activity.photo if activity.photo else url_for('static', filename='img/cards/default_' ~ activity.category ~ '.png') %}
+        <img src="{{ photo_url }}" alt="Activity Photo" class="activity-photo mb-0">
+    </div>
+
+    <!-- Conteúdo do card -->
+    <div class="activity-card-content bg-white text-dark rounded p-3 mt-2 shadow-sm">
+        {% if activity.address %}
+        <p class="text-muted mb-1"><i class="bi-geo-alt"></i> {{ activity.address }}</p>
+        {% endif %}
+
+        {% if activity.type %}
+        <p><strong>Type:</strong> {{ activity.type }}</p>
+        {% endif %}
+
+        {% if activity.category == 'accommodation' %}
+            {% if activity.check_in %}
+            <p><strong>Check-in:</strong> {{ activity.check_in }}</p>
+            {% endif %}
+            {% if activity.check_out %}
+            <p><strong>Check-out:</strong> {{ activity.check_out }}</p>
+            {% endif %}
+        {% endif %}
+
+        {% if activity.cost and activity.currency %}
+        <p><strong>Cost:</strong> {{ activity.currency }} {{ activity.cost }}</p>
+        <p><strong>Cost in USD:</strong> USD {{ activity.cost_in_USD }}</p>
+        {% endif %}
+
+        {% if activity.obs %}
+        <p><strong>Notes:</strong> {{ activity.obs }}</p>
+        {% endif %}
+
+        {% if activity.confirmed %}
+        <span class="badge bg-success">Confirmed</span>
+        {% else %}
+        <span class="badge bg-secondary">Not Confirmed</span>
+        {% endif %}
+    </div>
+</div>

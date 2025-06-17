@@ -1,9 +1,9 @@
 {% extends "base_add_card.html" %}
 
 {% block card_content %}
-<div class="activity-card activity-transportation">
+<div class="activity-card tag-transportation">
     <!-- conteúdo do card -->
-    <form method="POST">
+    <form method="POST" action="{{ url_for('trip.add_transport', trip_id=trip._id) }}">
         {{ form.hidden_tag() }}
 
         <div class="mb-2">
@@ -13,12 +13,12 @@
 
         <div class="mb-2">
             {{ form.departure.label(class="form-label") }}
-            {{ form.departure(class="form-control") }}
+            {{ form.departure(class="form-control", placeholder="location") }}
         </div>
 
         <div class="mb-2">
             {{ form.arrival.label(class="form-label") }}
-            {{ form.arrival(class="form-control") }}
+            {{ form.arrival(class="form-control", placeholder="location") }}
         </div>
 
         <div class="mb-2">
@@ -28,7 +28,7 @@
                     {{ form.currency(class="form-select") }}
                 </div>
                 <div class="col-6">
-                    {{ form.cost(class="form-control", min="0", step="0.01", placeholder="12.50") }}
+                    {{ form.cost(class="form-control", min="0", step="0.01") }}
                 </div>
 
             </div>

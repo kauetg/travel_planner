@@ -57,8 +57,23 @@
                              aria-labelledby="heading{{ loop.index }}" data-bs-parent="#drawerAccordion">
                             <div class="accordion-body">
                                 <div id="card-list-{{ category.category|lower|replace(' ', '-') }}">
-                                    <!-- Activity cards will go here -->
+                                    {% for activity in trip.activities if activity.category == category.category %}
+                                    <div class="activity-item tag-{{ category.category }} d-flex align-items-center justify-content-between mb-2 p-2 rounded text-white"
+                                         role="button"
+                                         data-activity-id="{{ activity.id }}"
+                                         data-label="{{ activity.title }}"
+                                         data-icon="{{ category.icon }}"
+                                    >
+                                        <div class="d-flex align-items-center gap-3">
+                                            <i class="{{ category.icon }}"></i>
+                                            <span class="fw-semibold">{{ activity.title }}</span>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-muted small">No activities yet.</div>
+                                    {% endfor %}
                                 </div>
+
                                 <button class="btn btn-sm btn-outline-primary mt-2 w-100"
                                         data-bs-toggle="modal"
                                         data-bs-target="#activityModal"
@@ -141,7 +156,8 @@
         </div>
 
     </div>
-    <div class="modal fade bd-example-modal-sm" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true">
+    <div class="modal fade bd-example-modal-sm" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog modal-sm modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -158,6 +174,24 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="viewActivityModal" tabindex="-1" aria-labelledby="viewActivityModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewActivityModalLabel">Activity Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="view-activity-content">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
 
@@ -175,7 +209,7 @@
     modalBody.innerHTML = '<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
 
     const modalTitle = document.getElementById("activityModalLabel");
-    modalTitle.innerText = label + icon
+    modalTitle.innerHTML = `<i class="${icon}"></i> <span>${label}</span>`;
 
     fetch(url)
       .then((response) => response.text())
@@ -186,6 +220,37 @@
         modalBody.innerHTML = "<p class='text-danger'>Failed to load form. Try again.</p>";
       });
   });
+});
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".activity-item").forEach((el) => {
+        el.addEventListener("click", function () {
+            const activityId = el.getAttribute("data-activity-id");
+            const icon = el.getAttribute("data-icon");
+            const label = el.getAttribute("data-label");
+            const tripId = "{{ trip._id }}";
+
+            const modal = new bootstrap.Modal(document.getElementById("viewActivityModal"));
+            const modalTitle = document.getElementById("viewActivityModalLabel");
+            const content = document.getElementById("view-activity-content");
+
+            content.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+            modalTitle.innerHTML = `<i class="${icon} me-2"></i> ${label}`;
+
+            fetch(`/trip/${tripId}/activity/${activityId}`)
+                .then(res => res.text())
+                .then(html => {
+                    content.innerHTML = html;
+                })
+                .catch(() => {
+                    content.innerHTML = '<div class="text-danger">Error loading activity.</div>';
+                });
+
+            modal.show();
+        });
+    });
 });
     </script>
 
