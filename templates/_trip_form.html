@@ -1,23 +1,43 @@
-<form method="POST" enctype="multipart/form-data">
-  <div class="mb-3">
-    <label class="form-label">Trip Name</label>
-    <input type="text" name="name" class="form-control" value="{{ trip.name if trip else '' }}">
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Start Date</label>
-    <input type="date" name="start_date" class="form-control" value="{{ trip.start_date if trip else '' }}">
-  </div>
-  <div class="mb-3">
-    <label class="form-label">End Date</label>
-    <input type="date" name="end_date" class="form-control" value="{{ trip.end_date if trip else '' }}">
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Location</label>
-    <input type="text" name="location" class="form-control" value="{{ trip.location if trip else '' }}">
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Cover Image</label>
-    <input type="file" name="image" accept="image/*" class="form-control">
-  </div>
-  <button type="submit" class="btn btn-primary">Save</button>
-</form>
+<div class="p-4 text-white rounded-4 shadow-sm" style="background-color: #02cbd9;">
+  <form method="POST" enctype="multipart/form-data" action="{{ url_for('home.add_or_update_trip') }}">
+    {% if trip %}
+    <input type="hidden" name="trip_id" value="{{ trip._id }}">
+    {% endif %}
+
+    <div class="mb-3">
+      <label class="form-label">Trip Name</label>
+      <input type="text" name="name" class="form-control" required value="{{ trip.name if trip else '' }}">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Start Date</label>
+      <input type="date" name="start_date" class="form-control"
+             value="{{ trip.start_date.strftime('%Y-%m-%d') if trip and trip.start_date else '' }}">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">End Date</label>
+      <input type="date" name="end_date" class="form-control"
+             value="{{ trip.end_date.strftime('%Y-%m-%d') if trip and trip.end_date else '' }}">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Location</label>
+      <input type="text" name="location" class="form-control" value="{{ trip.location if trip else '' }}">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Cover Image</label>
+      <input type="file" name="image" accept="image/*" class="form-control">
+      {% if trip and trip.img %}
+      <small class="form-text text-white-50 mt-1">
+        Current image: <a href="{{ trip.img }}" target="_blank" class="text-info text-decoration-underline">View</a>
+      </small>
+      {% endif %}
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-light">Save Trip</button>
+    </div>
+  </form>
+</div>

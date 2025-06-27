@@ -6,7 +6,6 @@
     font-style: normal;
 }
 
-
 /* Fonte padrão para o corpo */
 body {
     font-family: 'Roboto', sans-serif;
@@ -142,7 +141,7 @@ h1, h2, h3 {
   color: #145480; /* Laranja, por exemplo */
 }
 .activity-card {
-    border-radius: 1rem;
+    border-radius: 0.5rem;
     padding: 1rem;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     margin-bottom: 1rem;
@@ -167,9 +166,9 @@ h1, h2, h3 {
 }
 .activity-photo-container {
   width: 100%;
-  height: 400px;
+  height: 350px;
   overflow: hidden;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   background: #f0f0f0; /* caso a imagem não preencha tudo */
 
 }
@@ -180,15 +179,26 @@ h1, h2, h3 {
   object-fit: cover;
 
 }
-.activity-card {
-  border-radius: 1rem;
-  overflow: hidden;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
+
 
 
 .activity-card-content {
+   display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
   background-color: white;
+   border-radius: 0.5rem !important;
   color: #333;
+}
+
+input[readonly], select[disabled], textarea[readonly] {
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
+    padding-left: 0;
+}
+
+#viewActivityModal .modal-dialog {
+  transform: scale(0.95);
+  transform-origin: center top;
 }

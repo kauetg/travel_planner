@@ -3,7 +3,8 @@
 {% block card_content %}
 <div class="activity-card tag-transportation">
     <!-- conteúdo do card -->
-    <form method="POST" action="{{ url_for('trip.add_transport', trip_id=trip._id) }}">
+    <form method="POST"
+          action="{{ url_for('trip.add_activity_by_category', trip_id=trip._id, category='transportation') }}">
         {{ form.hidden_tag() }}
 
         <div class="mb-2">
@@ -14,11 +15,17 @@
         <div class="mb-2">
             {{ form.departure.label(class="form-label") }}
             {{ form.departure(class="form-control", placeholder="location") }}
+            {{ form.departure_lat }}
+            {{ form.departure_lon }}
+            {{ form.departure_map_image }}
         </div>
 
         <div class="mb-2">
             {{ form.arrival.label(class="form-label") }}
             {{ form.arrival(class="form-control", placeholder="location") }}
+            {{ form.arrival_lat }}
+            {{ form.arrival_lon }}
+            {{ form.arrival_map_image }}
         </div>
 
         <div class="mb-2">

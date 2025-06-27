@@ -1,0 +1,28 @@
+<!-- templates/modals/add_info.html -->
+<div class="modal fade" id="addInfoModal" tabindex="-1" aria-labelledby="addInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="customInfoForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addInfoModalLabel">➕ Add Custom Info</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label for="info-title" class="form-label">Title</label>
+          <input type="text" id="info-title" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label for="info-url" class="form-label">URL</label>
+          <input type="url" id="info-url" class="form-control">
+        </div>
+        <div class="mb-2">
+          <label for="info-notes" class="form-label">Notes</label>
+          <textarea id="info-notes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Save Info</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -5,7 +5,7 @@ import cloudinary.uploader
 import os
 from dotenv import load_dotenv
 import pycountry
-from forex_python.converter import CurrencyRates
+
 
 load_dotenv()
 
@@ -102,5 +102,21 @@ def convert_to_USD(value, currency):
     except:
         return 0
 
-
+icon_map = {
+        "Plane": "bi-airplane",
+        "Boat": "bi-life-preserver",
+        "Bus": "bi-bus-front",
+        "Car": "bi-car-front",
+        "Other": "bi-box",
+        "Tour": "bi-person-walking",
+        "Dive": "bi-droplet",
+        "Museum": "bi-bank",
+        "Hike": "bi-tree",
+        "Full Meal": "bi-egg-fried",
+        "Snacks": "bi-cup-straw",
+        "Desert": "bi-cup-hot",
+        "Hotel": "bi-house-door-fill",
+        "Airbnb": "bi-house-door-fill",
+        "Friends House": "bi-house-door-fill",
+    }
 

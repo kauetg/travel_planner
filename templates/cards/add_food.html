@@ -3,7 +3,7 @@
 {% block card_content %}
 <div class="activity-card tag-food">
     <!-- conteúdo do card -->
-    <form method="POST" action="{{ url_for('trip.add_food', trip_id=trip._id) }}">
+    <form method="POST" action="{{ url_for('trip.add_activity_by_category', trip_id=trip._id, category='food') }}">
         {{ form.hidden_tag() }}
 
         <div class="mb-2">

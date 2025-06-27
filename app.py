@@ -16,6 +16,8 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 app.db = client["travel_planner"]
+app.config["MAPBOX_PUBLIC_TOKEN"] = os.environ.get("MAPBOX_PUBLIC_TOKEN")
+
 
 
 # Blueprints

@@ -31,39 +31,45 @@ def index():
 
 
 @home_bp.route("/add", methods=["POST"])
-def add_trip():
+def add_or_update_trip():
     db = current_app.db
-    # Exemplo básico de dados coletados de um formulário
+
+    trip_id = request.form.get("trip_id")
     name = request.form.get("name")
     start_date = request.form.get("start_date")
     end_date = request.form.get("end_date")
     location = request.form.get("location")
-    image_filename = request.files.get("image")
+    image_file = request.files.get("image")
 
     start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
     end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
-
     location_info = get_location_data(location)
 
+    img_url = None
+    if image_file and image_file.filename:
+        img_url = upload_image_to_cloudinary(image_file)
 
-    print(image_filename)
-    trip = {
+    update_data = {
         "name": name,
         "start_date": start_datetime,
         "end_date": end_datetime,
         "dates": get_date_range(start_datetime, end_datetime),
         "location": location,
-        "img": upload_image_to_cloudinary(image_filename),
-        "year": datetime.strptime(start_date, "%Y-%m-%d").year,
+        "year": start_datetime.year,
         "lat": location_info["lat"],
         "lng": location_info["lng"],
         "country_name": location_info["country"],
         "country_code": location_info["country_code"],
-
-
     }
 
-    inserted = db.trips.insert_one(trip)
-    trip_id = str(inserted.inserted_id)
+    if img_url:
+        update_data["img"] = img_url
 
-    return redirect(url_for('trip.view_trip', trip_id=trip_id))
+    if trip_id:
+        db.trips.update_one({"_id": ObjectId(trip_id)}, {"$set": update_data})
+    else:
+        update_data["img"] = img_url or "https://placehold.co/600x400"  # default fallback
+        inserted = db.trips.insert_one(update_data)
+        trip_id = str(inserted.inserted_id)
+
+    return redirect(url_for("trip.view_trip", trip_id=trip_id))

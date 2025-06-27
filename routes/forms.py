@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, BooleanField, DecimalField, SelectField, TextAreaField, IntegerField
+from wtforms import StringField, BooleanField, DecimalField, SelectField, TextAreaField, IntegerField, HiddenField
 from wtforms.validators import DataRequired, Optional, URL, NumberRange
 from .utils import currencies
 
@@ -7,7 +7,13 @@ from .utils import currencies
 class TransportForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
     departure = StringField('Departure', validators=[DataRequired()])
+    departure_lat = HiddenField()
+    departure_lon = HiddenField()
+    departure_map_image = HiddenField()
     arrival = StringField('Arrival', validators=[DataRequired()])
+    arrival_lat = HiddenField()
+    arrival_lon = HiddenField()
+    arrival_map_image = HiddenField()
     cost = DecimalField("Cost", validators=[Optional(), NumberRange(min=0, message="Cost must be positive")])
     currency = SelectField("Currency", choices=[])  # define vazio aqui
     duration = IntegerField("Duration (h)",
@@ -16,11 +22,11 @@ class TransportForm(FlaskForm):
     type = SelectField(
         "Transport Type",
         choices=[
-            ("plane", "Plane"),
-            ("boat", "Boat"),
-            ("bus", "Bus"),
-            ("car", "Rented Car"),
-            ("other", "Other"),
+            ("Plane", "Plane"),
+            ("Boat", "Boat"),
+            ("Bus", "Bus"),
+            ("Car", "Rented Car"),
+            ("Other", "Other"),
         ],
         validators=[Optional()]
     )
@@ -41,6 +47,16 @@ class AccommodationForm(FlaskForm):
     duration = IntegerField('Number of Nights', validators=[Optional()])
     confirmed = BooleanField('Confirmed')
     currency = SelectField("Currency", choices=[])  # define vazio aqui
+    type = SelectField(
+        "Accomodation Type",
+        choices=[
+            ("Hotel", "Hotel"),
+            ("Airbnb", "Airbnb"),
+            ("Friends House", "Friends House"),
+            ("Other", "Other"),
+        ],
+        validators=[Optional()]
+    )
 
     def __init__(self, *args, **kwargs):
         self.trip = kwargs.pop('trip', None)
@@ -57,11 +73,11 @@ class ActivityForm(FlaskForm):
     type = SelectField(
         "Activity Type",
         choices=[
-            ("tour", "Tour"),
-            ("hike", "Hike"),
-            ("dive", "Dive"),
-            ("museum", "Museum"),
-            ("other", "Other"),
+            ("Tour", "Tour"),
+            ("Dive", "Dive"),
+            ("Museum", "Museum"),
+            ("Hike", "Hike"),
+            ("Other", "Other"),
         ],
         validators=[Optional()]
     )
@@ -87,9 +103,9 @@ class FoodForm(FlaskForm):
     type = SelectField(
         "Activity Type",
         choices=[
-            ("meal", "Full Meal"),
-            ("snack", "Snacks"),
-            ("desert", "Desert"),
+            ("Full Meal", "Full Meal"),
+            ("Snacks", "Snacks"),
+            ("Desert", "Desert"),
         ],
         validators=[Optional()]
     )
