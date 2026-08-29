@@ -621,3 +621,70 @@ input[readonly], select[disabled], textarea[readonly] {
 .sortable-ghost  { opacity: 0.35; }
 .sortable-chosen { box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
 .drop-cell.sortable-ghost { background: #fff5ee; border-radius: 0.4rem; }
+
+/* ════════════════════════════════════════════════════
+   MOBILE — trip detail (itinerary grid, finance tables, activity cards)
+   ════════════════════════════════════════════════════ */
+@media (max-width: 576px) {
+
+  .section-card .card-body { padding: 1rem; }
+
+  /* ── Activity cards: grade de 2 colunas em vez de 1 coluna larga ── */
+  .act-card { width: calc(50% - 0.5rem); }
+  .act-card-img { height: 110px; }
+
+  /* ── Itinerary: bancada vira faixa horizontal acima da grade ── */
+  .itinerary-layout { flex-direction: column; }
+  .bancada { width: 100%; }
+  .bancada-list {
+    flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+    max-height: none; padding-bottom: 4px;
+  }
+  .bancada-card { flex-shrink: 0; }
+
+  /* ── Itinerary: coluna de categoria mais estreita e fixa ao rolar os dias ── */
+  .itinerary-table { border-spacing: 3px; }
+  .itinerary-table td { min-width: 64px; max-width: 64px; width: 64px; }
+  .itinerary-table th { padding: 0.4rem 0.35rem; font-size: 0.72rem; }
+  .itinerary-table .cat-col .cat-chip {
+    width: 34px; height: 34px; padding: 0; border-radius: 50%; justify-content: center;
+  }
+  .itinerary-table td.cat-col,
+  .itinerary-table th.cat-col {
+    width: 46px; min-width: 46px; max-width: 46px;
+    position: sticky; left: 0; z-index: 2; background: #fff;
+  }
+  .itinerary-block { font-size: 0.68rem; padding: 0.25rem 0.35rem; min-height: 32px; }
+
+  /* ── Finance heatmap: mesma ideia — coluna fixa + células menores ── */
+  .fin-heatmap-cat,
+  .fin-heatmap tfoot td:first-child {
+    position: sticky; left: 0; z-index: 2; background: #fff;
+  }
+  .fin-heatmap-cell, .fin-heatmap-total { min-width: 54px; font-size: 0.76rem; padding: 0.5rem 0.3rem; }
+
+  /* ── Full expenses table: de colunas apertadas para lista de cards ── */
+  .fin-sortable thead { display: none; }
+  #fullExpensesTable, #fullExpensesTable tbody { display: block; width: 100%; }
+  #fullExpensesTable tr {
+    display: flex; flex-wrap: wrap; align-items: baseline;
+    background: #fff; border-radius: 1rem; box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    padding: 0.8rem 1rem; margin-bottom: 0.7rem; gap: 0.2rem 0.5rem;
+  }
+  #fullExpensesTable td {
+    display: inline-flex; padding: 0;
+    border: none !important; background: none !important; box-shadow: none !important;
+  }
+
+  #fullExpensesTable td[data-label="Category"] { order: 1; }
+  #fullExpensesTable td[data-label="USD"]      { order: 2; margin-left: auto; font-weight: 700; color: #ff914d; font-size: 1rem; }
+  #fullExpensesTable td[data-label="Title"] {
+    order: 3; flex: 1 1 100%; font-weight: 700; font-size: 0.95rem; color: #222;
+    margin-top: 0.2rem; padding-top: 0.35rem !important; border-top: 1px solid #f0f0f0 !important;
+  }
+  #fullExpensesTable td[data-label="Type"] { order: 4; font-size: 0.78rem; color: #888; }
+  #fullExpensesTable td[data-label="Type"]:not(:empty)::after { content: "\00b7"; margin-left: 0.4rem; color: #ccc; }
+  #fullExpensesTable td[data-label="Date"] { order: 5; font-size: 0.78rem; color: #888; }
+  #fullExpensesTable td[data-label="Actions"] { order: 6; margin-left: auto; }
+  #fullExpensesTable td[data-label="Actions"] .btn { padding: 0.2rem 0.6rem; font-size: 0.72rem; }
+}

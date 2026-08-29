@@ -21,6 +21,7 @@ MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 app.db = client["travel_planner"]
 app.config["MAPBOX_PUBLIC_TOKEN"] = os.environ.get("MAPBOX_PUBLIC_TOKEN")
+app.config["CARTO_API_KEY"] = os.environ.get("CARTO_API_KEY")
 
 login_manager.init_app(app)
 

@@ -113,12 +113,12 @@
           <tbody>
             {% for act in trip.activities %}
             <tr>
-              <td data-value="{{ act.category }}"><span class="cat-chip cat-{{ act.category }}"><i class="bi {{ act.icon }}"></i> {{ short_label.get(act.category, act.category) }}</span></td>
-              <td>{{ act.title }}</td>
-              <td data-value="{{ act.cost_in_USD or 0 }}">{{ "%.2f"|format(act.cost_in_USD or 0) }}</td>
-              <td>{{ act.type }}</td>
-              <td>{{ act.start_date or "" }}</td>
-              <td><a href="#" class="btn btn-sm btn-outline-primary">Edit</a></td>
+              <td data-label="Category" data-value="{{ act.category }}"><span class="cat-chip cat-{{ act.category }}"><i class="bi {{ act.icon }}"></i> {{ short_label.get(act.category, act.category) }}</span></td>
+              <td data-label="Title">{{ act.title }}</td>
+              <td data-label="USD" data-value="{{ act.cost_in_USD or 0 }}">{{ "%.2f"|format(act.cost_in_USD or 0) }}</td>
+              <td data-label="Type">{{ act.type }}</td>
+              <td data-label="Date">{{ act.start_date or "" }}</td>
+              <td data-label="Actions"><a href="#" class="btn btn-sm btn-outline-primary">Edit</a></td>
             </tr>
             {% endfor %}
           </tbody>
