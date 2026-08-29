@@ -1,0 +1,202 @@
+{# trip/_card_finances.html #}
+
+{% set fin_categories = [
+  ('food',           'Food',           'bi-cup-hot-fill',    food_usd,   food_avg),
+  ('transportation', 'Transportation', 'bi-airplane-fill',   trans_usd,  trans_avg),
+  ('accommodation',  'Accommodation',  'bi-house-door-fill', accom_usd,  accom_avg),
+  ('activity',       'Activities',     'bi-camera-fill',     act_usd,    act_avg),
+] %}
+
+{% set short_label = {
+  'food': 'Food',
+  'transportation': 'Transp',
+  'accommodation': 'Accomm',
+  'activity': 'Activities',
+} %}
+
+<div class="section-card card mb-4">
+  <div class="card-header" data-bs-toggle="collapse" data-bs-target="#financesBody">
+    <h2><i class="bi bi-cash-stack"></i> Finances</h2>
+    <i class="bi bi-chevron-down chevron"></i>
+  </div>
+
+  <div class="collapse show" id="financesBody">
+    <div class="card-body">
+
+      <!-- Resumo: total + por categoria -->
+      <div class="fin-summary-row mb-4">
+        <div class="fin-total-card">
+          <div class="fin-total-label">Total Trip Cost</div>
+          <div class="fin-total-value">USD {{ "%.2f"|format(total_usd) }}</div>
+          <div class="fin-total-avg">Avg {{ "%.2f"|format(avg_per_day) }}/day</div>
+        </div>
+
+        <div class="fin-cat-grid">
+          {% for key, label, icon, val, avg in fin_categories %}
+          <div class="fin-cat-card">
+            <div class="fin-cat-icon cat-{{ key }}"><i class="bi {{ icon }}"></i></div>
+            <div>
+              <div class="fin-cat-value">USD {{ "%.2f"|format(val) }}</div>
+              <div class="fin-cat-label">{{ label }}</div>
+              <div class="fin-cat-avg">Avg {{ "%.2f"|format(avg) }}/day</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Gráfico + destaque -->
+      <div class="fin-chart-row mb-4">
+        <div class="fin-chart-wrap">
+          <canvas id="costByCategoryChart"></canvas>
+          <div class="fin-chart-center">
+            <div class="fin-chart-center-value">{{ "%.0f"|format(total_usd) }}</div>
+            <div class="fin-chart-center-label">USD total</div>
+          </div>
+        </div>
+        <div class="fin-highlight-card">
+          <i class="bi bi-star-fill"></i>
+          <div>
+            <div class="fin-highlight-label">Most expensive</div>
+            <div class="fin-highlight-value">{{ most_expensive_item or "—" }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Heatmap por dia -->
+      <div class="fin-heatmap-wrap mb-4">
+        <table class="fin-heatmap">
+          <thead>
+            <tr>
+              <th></th>
+              {% for d in trip.dates %}<th>{{ trip.dates_formatted[loop.index0] }}</th>{% endfor %}
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for key, label, icon, val, avg in fin_categories %}
+            <tr class="cat-tint-{{ key }}">
+              <td class="fin-heatmap-cat">
+                <span class="cat-chip cat-{{ key }}" title="{{ label }}"><i class="bi {{ icon }}"></i></span>
+              </td>
+              {% for d in trip.dates %}
+              {% set v = daily_category[key][d] %}
+              <td class="fin-heatmap-cell {{ 'is-zero' if v == 0 }}">{{ "–" if v == 0 else "%.0f"|format(v) }}</td>
+              {% endfor %}
+              <td class="fin-heatmap-total">{{ "%.2f"|format(total_category[key]) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Total</td>
+              {% for d in trip.dates %}<td>{{ "%.0f"|format(total_per_day[d]) }}</td>{% endfor %}
+              <td>{{ "%.2f"|format(total_usd) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Tabela completa -->
+      <div class="table-responsive">
+        <table class="table table-striped table-hover fin-sortable" id="fullExpensesTable">
+          <thead>
+            <tr>
+              <th data-sort="text">Category</th>
+              <th data-sort="text">Title</th>
+              <th data-sort="number">USD</th>
+              <th data-sort="text">Type</th>
+              <th data-sort="text" data-sort-default="desc">Date</th>
+              <th data-sort="none">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for act in trip.activities %}
+            <tr>
+              <td data-value="{{ act.category }}"><span class="cat-chip cat-{{ act.category }}"><i class="bi {{ act.icon }}"></i> {{ short_label.get(act.category, act.category) }}</span></td>
+              <td>{{ act.title }}</td>
+              <td data-value="{{ act.cost_in_USD or 0 }}">{{ "%.2f"|format(act.cost_in_USD or 0) }}</td>
+              <td>{{ act.type }}</td>
+              <td>{{ act.start_date or "" }}</td>
+              <td><a href="#" class="btn btn-sm btn-outline-primary">Edit</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Lê as cores direto das CSS variables — fonte única de verdade
+  const style = getComputedStyle(document.documentElement);
+  const colors = {
+    food:           style.getPropertyValue('--cat-food-bg').trim(),
+    transportation: style.getPropertyValue('--cat-transportation-bg').trim(),
+    accommodation:  style.getPropertyValue('--cat-accommodation-bg').trim(),
+    activity:       style.getPropertyValue('--cat-activity-bg').trim(),
+  };
+
+  new Chart(document.getElementById('costByCategoryChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Food', 'Transportation', 'Accommodation', 'Activities'],
+      datasets: [{
+        data: [{{ food_usd }}, {{ trans_usd }}, {{ accom_usd }}, {{ act_usd }}],
+        backgroundColor: [colors.food, colors.transportation, colors.accommodation, colors.activity],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      cutout: '72%',
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+    }
+  });
+
+  // Sort simples por coluna, sem dependências
+  const table = document.getElementById('fullExpensesTable');
+  const tbody = table.tBodies[0];
+
+  table.querySelectorAll('th[data-sort]').forEach((th, index) => {
+    const type = th.dataset.sort;
+    if (type === 'none') return;
+
+    th.classList.add('sortable');
+    th.addEventListener('click', () => {
+      const dir = th.dataset.sortDir === 'asc' ? 'desc' : 'asc';
+
+      table.querySelectorAll('th[data-sort]').forEach(other => {
+        other.dataset.sortDir = '';
+        other.classList.remove('sort-asc', 'sort-desc');
+      });
+      th.dataset.sortDir = dir;
+      th.classList.add(dir === 'asc' ? 'sort-asc' : 'sort-desc');
+
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const cellA = a.children[index];
+        const cellB = b.children[index];
+        const rawA = cellA.dataset.value ?? cellA.textContent.trim();
+        const rawB = cellB.dataset.value ?? cellB.textContent.trim();
+
+        const valA = type === 'number' ? parseFloat(rawA) || 0 : rawA.toLowerCase();
+        const valB = type === 'number' ? parseFloat(rawB) || 0 : rawB.toLowerCase();
+
+        if (valA < valB) return dir === 'asc' ? -1 : 1;
+        if (valA > valB) return dir === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      rows.forEach(row => tbody.appendChild(row));
+    });
+  });
+
+  // Ordena por data (desc) ao carregar
+  table.querySelector('th[data-sort-default="desc"]')?.click();
+});
+</script>

@@ -1,0 +1,291 @@
+{# _modal_plan.html #}
+
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+
+<div class="modal fade" id="planModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="planModalTitle">New Plan</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="plan-id" value="">
+        <input type="hidden" id="plan-converted" value="">
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Title</label>
+          <input type="text" id="plan-title" class="form-control" required placeholder="e.g. Japan sometime next year">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Destination <span class="text-muted small">(optional)</span></label>
+          <input type="text" id="plan-destination" class="form-control" placeholder="e.g. Japan">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Cover Photo <span class="text-muted small">(optional)</span></label>
+          <input type="file" id="plan-image" accept="image/*" class="form-control">
+          <small class="text-muted mt-1 d-block d-none" id="plan-image-current">
+            Current: <a href="#" target="_blank" class="text-decoration-underline">View</a>
+          </small>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold cat-chip cat-transportation"><i class="bi bi-airplane-fill"></i> Transportation</label>
+            <div class="plan-quill-wrap"><div id="plan-box-transportation-editor"></div></div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold cat-chip cat-accommodation"><i class="bi bi-house-door-fill"></i> Stay</label>
+            <div class="plan-quill-wrap"><div id="plan-box-accommodation-editor"></div></div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold cat-chip cat-activity"><i class="bi bi-camera-fill"></i> Activities</label>
+            <div class="plan-quill-wrap"><div id="plan-box-activity-editor"></div></div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold cat-chip cat-food"><i class="bi bi-cup-hot-fill"></i> Food</label>
+            <div class="plan-quill-wrap"><div id="plan-box-food-editor"></div></div>
+          </div>
+        </div>
+
+        <div id="plan-todos-section" class="mb-3 d-none">
+          <label class="form-label fw-semibold">To-do</label>
+          <div id="plan-todos-list" class="d-flex flex-column gap-2 mb-2"></div>
+          <div class="input-group">
+            <input type="text" id="plan-todo-input" class="form-control" placeholder="Add a to-do...">
+            <button type="button" class="btn btn-outline-secondary" id="plan-todo-add-btn">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <div>
+          <button type="button" class="btn btn-outline-danger btn-sm d-none" id="plan-delete-btn">
+            <i class="bi bi-trash me-1"></i> Delete
+          </button>
+          <button type="button" class="btn btn-outline-primary btn-sm d-none" id="plan-convert-btn">
+            <i class="bi bi-arrow-right-circle me-1"></i> Convert to Trip
+          </button>
+        </div>
+        <button type="button" class="btn btn-primary px-4" id="plan-save-btn">Save Plan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script>
+const PLAN_BOX_KEYS = ['transportation', 'accommodation', 'activity', 'food'];
+let planQuills = null;
+
+function planImageHandler() {
+  const url = prompt('Paste an image URL:');
+  if (!url) return;
+  const range = this.quill.getSelection(true);
+  this.quill.insertEmbed(range.index, 'image', url, 'user');
+  this.quill.setSelection(range.index + 1);
+}
+
+function ensurePlanQuills() {
+  if (planQuills) return planQuills;
+  planQuills = {};
+  PLAN_BOX_KEYS.forEach(key => {
+    planQuills[key] = new Quill(`#plan-box-${key}-editor`, {
+      theme: 'snow',
+      placeholder: 'Notes, ideas, links...',
+      modules: {
+        toolbar: {
+          container: [['bold', 'italic'], ['link', 'image'], ['clean']],
+          handlers: { image: planImageHandler },
+        },
+      },
+    });
+  });
+  return planQuills;
+}
+
+function setPlanQuillContent(key, html) {
+  const quill = ensurePlanQuills()[key];
+  quill.setContents([]);
+  if (html) quill.clipboard.dangerouslyPasteHTML(html);
+}
+
+function getPlanQuillContent(key) {
+  const quill = ensurePlanQuills()[key];
+  return quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
+}
+
+function resetPlanModalFields() {
+  document.getElementById('plan-id').value = '';
+  document.getElementById('plan-converted').value = '';
+  document.getElementById('plan-title').value = '';
+  document.getElementById('plan-destination').value = '';
+  document.getElementById('plan-image').value = '';
+  document.getElementById('plan-image-current').classList.add('d-none');
+  PLAN_BOX_KEYS.forEach(key => setPlanQuillContent(key, ''));
+  document.getElementById('plan-todos-list').innerHTML = '';
+}
+
+function openNewPlanModal() {
+  resetPlanModalFields();
+  document.getElementById('planModalTitle').textContent = 'New Plan';
+  document.getElementById('plan-todos-section').classList.add('d-none');
+  document.getElementById('plan-delete-btn').classList.add('d-none');
+  document.getElementById('plan-convert-btn').classList.add('d-none');
+  new bootstrap.Modal(document.getElementById('planModal')).show();
+}
+window.openNewPlanModal = openNewPlanModal;
+
+function renderPlanTodos(todos) {
+  const list = document.getElementById('plan-todos-list');
+  list.innerHTML = '';
+  todos.forEach(t => {
+    const row = document.createElement('div');
+    row.className = 'form-check d-flex align-items-center gap-2 mb-0';
+    row.innerHTML = `
+      <input class="form-check-input mt-0" type="checkbox" ${t.done ? 'checked' : ''}>
+      <label class="form-check-label flex-grow-1 ${t.done ? 'text-decoration-line-through text-muted' : ''}"></label>
+      <button type="button" class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-x-lg"></i></button>
+    `;
+    row.querySelector('label').textContent = t.text;
+    row.querySelector('input[type="checkbox"]').addEventListener('change', function () {
+      togglePlanTodo(t.id, this);
+    });
+    row.querySelector('button').addEventListener('click', function () {
+      deletePlanTodo(t.id);
+    });
+    list.appendChild(row);
+  });
+}
+
+async function refreshPlanTodos() {
+  const planId = document.getElementById('plan-id').value;
+  if (!planId) return;
+  const resp = await fetch(`/plan/${planId}`);
+  const plan = await resp.json();
+  renderPlanTodos(plan.todos || []);
+}
+
+async function togglePlanTodo(todoId, checkbox) {
+  const planId = document.getElementById('plan-id').value;
+  checkbox.disabled = true;
+  await fetch(`/plan/${planId}/todo/${todoId}/toggle`, { method: 'POST' });
+  await refreshPlanTodos();
+}
+
+async function deletePlanTodo(todoId) {
+  const planId = document.getElementById('plan-id').value;
+  await fetch(`/plan/${planId}/todo/${todoId}/delete`, { method: 'POST' });
+  await refreshPlanTodos();
+}
+
+async function openEditPlanModal(planId) {
+  const resp = await fetch(`/plan/${planId}`);
+  const plan = await resp.json();
+
+  resetPlanModalFields();
+  document.getElementById('planModalTitle').textContent = 'Edit Plan';
+  document.getElementById('plan-id').value = plan._id;
+  document.getElementById('plan-converted').value = plan.converted_trip_id || '';
+  document.getElementById('plan-title').value = plan.title || '';
+  document.getElementById('plan-destination').value = plan.destination || '';
+
+  if (plan.img) {
+    const currentEl = document.getElementById('plan-image-current');
+    currentEl.classList.remove('d-none');
+    currentEl.querySelector('a').href = plan.img;
+  }
+
+  const boxes = plan.boxes || {};
+  PLAN_BOX_KEYS.forEach(key => setPlanQuillContent(key, boxes[key] || ''));
+
+  document.getElementById('plan-todos-section').classList.remove('d-none');
+  document.getElementById('plan-delete-btn').classList.remove('d-none');
+  document.getElementById('plan-convert-btn').classList.toggle('d-none', !!plan.converted_trip_id);
+  renderPlanTodos(plan.todos || []);
+
+  new bootstrap.Modal(document.getElementById('planModal')).show();
+}
+window.openEditPlanModal = openEditPlanModal;
+
+document.addEventListener('DOMContentLoaded', function () {
+  ensurePlanQuills();
+
+  document.getElementById('plan-todo-add-btn').addEventListener('click', async function () {
+    const planId = document.getElementById('plan-id').value;
+    const input = document.getElementById('plan-todo-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const fd = new FormData();
+    fd.append('text', text);
+    await fetch(`/plan/${planId}/todo/add`, { method: 'POST', body: fd });
+    input.value = '';
+    await refreshPlanTodos();
+  });
+
+  document.getElementById('plan-save-btn').addEventListener('click', async function () {
+    const planId = document.getElementById('plan-id').value;
+    const title = document.getElementById('plan-title').value.trim();
+    if (!title) { alert('Title is required.'); return; }
+
+    const fd = new FormData();
+    if (planId) fd.append('plan_id', planId);
+    fd.append('title', title);
+    fd.append('destination', document.getElementById('plan-destination').value.trim());
+    fd.append('box_transportation', getPlanQuillContent('transportation'));
+    fd.append('box_accommodation', getPlanQuillContent('accommodation'));
+    fd.append('box_activity', getPlanQuillContent('activity'));
+    fd.append('box_food', getPlanQuillContent('food'));
+
+    const imageFile = document.getElementById('plan-image').files[0];
+    if (imageFile) fd.append('image', imageFile);
+
+    const resp = await fetch('/plan/add', { method: 'POST', body: fd });
+    if (resp.ok) {
+      location.reload();
+    } else {
+      const err = await resp.json();
+      alert(err.error || 'Failed to save plan.');
+    }
+  });
+
+  document.getElementById('plan-delete-btn').addEventListener('click', async function () {
+    if (!confirm('Delete this plan?')) return;
+    const planId = document.getElementById('plan-id').value;
+    const resp = await fetch(`/plan/${planId}/delete`, { method: 'POST' });
+    if (resp.ok) location.reload();
+    else alert('Failed to delete plan.');
+  });
+
+  document.getElementById('plan-convert-btn').addEventListener('click', async function () {
+    const planId = document.getElementById('plan-id').value;
+    const resp = await fetch(`/plan/${planId}/convert`, { method: 'POST' });
+    if (!resp.ok) { alert('Failed to convert plan.'); return; }
+    const data = await resp.json();
+
+    bootstrap.Modal.getInstance(document.getElementById('planModal')).hide();
+
+    setTimeout(() => {
+      document.querySelector('#addTripModal [name="name"]').value = data.title || '';
+      document.querySelector('#addTripModal [name="location"]').value = data.destination || '';
+
+      let hiddenInput = document.getElementById('add-trip-from-plan-id');
+      if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'from_plan_id';
+        hiddenInput.id = 'add-trip-from-plan-id';
+        document.querySelector('#addTripModal form').appendChild(hiddenInput);
+      }
+      hiddenInput.value = planId;
+
+      new bootstrap.Modal(document.getElementById('addTripModal')).show();
+    }, 400);
+  });
+
+});
+</script>

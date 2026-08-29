@@ -1,0 +1,59 @@
+{# trip/_card_activities.html #}
+
+<div class="section-card card">
+  <div class="card-header" data-bs-toggle="collapse" data-bs-target="#activitiesBody">
+    <h2><i class="bi bi-lightning-charge-fill"></i> Activities</h2>
+    <div class="d-flex align-items-center gap-3">
+      <button class="btn btn-primary btn-sm rounded-pill px-3"
+              data-bs-toggle="modal" data-bs-target="#activityModal"
+              onclick="event.stopPropagation()">
+        + Add
+      </button>
+      <i class="bi bi-chevron-down chevron collapsed"></i>
+    </div>
+  </div>
+
+  <div class="collapse" id="activitiesBody">
+    <div class="card-body">
+
+      {% for cat in categories %}
+      {% set cat_acts = trip.activities | selectattr('category', 'equalto', cat.category) | list %}
+      {% if cat_acts %}
+      <div class="mb-4">
+        <div class="d-flex flex-wrap gap-3">
+          {% for act in cat_acts %}
+          <div class="act-card cat-{{ act.category }}"
+               data-activity-id="{{ act.id }}"
+               data-icon="{{ act.icon }}"
+               data-label="{{ act.title }}"
+               data-trip-id="{{ trip._id }}">
+            <div class="act-card-img"
+                 style="background-image: url('{{ act.img | default('/static/img/cards/default_' + act.category + '.png') | safe }}')">
+              {% if not act.confirmed %}
+              <div class="act-card-badge" title="Pending confirmation"><i class="bi bi-hourglass-split"></i></div>
+              {% endif %}
+            </div>
+            <div class="act-card-body">
+              <div class="act-card-header">
+                <i class="bi {{ act.icon }}"></i>
+                <span class="act-card-name">{{ act.title }}</span>
+              </div>
+              <div class="act-card-meta">
+                <span class="act-card-type">{{ act.type }}</span>
+                {% if act.cost_in_USD %}<span class="act-card-price">USD {{ "%.0f"|format(act.cost_in_USD) }}</span>{% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+
+      {% if not trip.activities %}
+      <p class="text-muted small">No activities yet. Hit + Add to get started!</p>
+      {% endif %}
+
+    </div>
+  </div>
+</div>

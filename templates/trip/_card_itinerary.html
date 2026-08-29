@@ -1,0 +1,174 @@
+{# trip/_card_itinerary.html #}
+
+{% set unscheduled = trip.activities | rejectattr('start_date') | list %}
+
+<div class="section-card card">
+  <div class="card-header" data-bs-toggle="collapse" data-bs-target="#itineraryBody">
+    <h2><i class="bi bi-calendar3"></i> Itinerary</h2>
+    <i class="bi bi-chevron-down chevron"></i>
+  </div>
+
+  <div class="collapse show" id="itineraryBody">
+    <div class="card-body">
+
+      <div class="itinerary-layout" id="itineraryLayout">
+
+        {% if unscheduled %}
+        <!-- Bancada -->
+        <div class="bancada" id="bancada">
+          <div class="bancada-title">Unscheduled</div>
+          <div class="bancada-list" id="bancadaList">
+            {% for act in unscheduled %}
+            <div class="bancada-card cat-{{ act.category }}"
+                 data-activity-id="{{ act.id }}"
+                 data-category="{{ act.category }}"
+                 data-icon="{{ act.icon }}"
+                 data-title="{{ act.title }}"
+                 data-duration="{{ act.duration or 1 }}">
+              <i class="bi {{ act.icon }}"></i>
+              <span>{{ act.title }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Grade -->
+        <div class="itinerary-wrap flex-grow-1">
+          <table class="itinerary-table">
+            <thead>
+              <tr>
+                <th class="cat-col"></th>
+                {% for i in range(trip.dates | length) %}
+                <th>
+                  Day {{ i + 1 }}<br>
+                  <span class="fw-normal text-muted">{{ trip.dates_formatted[i] }}</span>
+                </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for cat in categories %}
+              <tr data-category="{{ cat.category }}">
+                <td class="cat-col">
+                  <span class="cat-chip cat-{{ cat.category }}">
+                    <i class="bi {{ cat.icon }}"></i>
+                    <span class="d-none d-md-inline">{{ cat.label }}</span>
+                  </span>
+                </td>
+
+                {% set ns = namespace(skip=0) %}
+                {% for date in trip.dates %}
+                {% if ns.skip > 0 %}
+                  {% set ns.skip = ns.skip - 1 %}
+                {% else %}
+                  {% set acts_found = [] %}
+                  {% for a in trip.activities %}
+                    {% if a.category == cat.category and a.start_date == date %}
+                      {% set _ = acts_found.append(a) %}
+                    {% endif %}
+                  {% endfor %}
+
+                  {% if acts_found | length == 1 and acts_found[0].duration %}
+                    {% set duration = acts_found[0].duration | int %}
+                    {% set ns.skip = duration - 1 %}
+                    {% set colspan = duration %}
+                  {% else %}
+                    {% set colspan = 1 %}
+                  {% endif %}
+
+                  <td colspan="{{ colspan }}"
+                      data-date="{{ date }}"
+                      data-category="{{ cat.category }}"
+                      class="drop-cell">
+                    {% for a in acts_found %}
+                    <div class="itinerary-block cat-{{ a.category }} {{ 'itinerary-unconfirmed' if not a.confirmed }}"
+                         data-activity-id="{{ a.id }}"
+                         onclick="onBlockClick('{{ a.id }}', '{{ trip._id }}')">
+                      <i class="bi {{ a.icon }}"></i>
+                      <span>{{ a.title }}</span>
+                      <button class="block-x"
+                              onclick="event.stopPropagation(); unassignActivity('{{ a.id }}', '{{ trip._id }}', this)">
+                        ×
+                      </button>
+                    </div>
+                    {% endfor %}
+                  </td>
+                {% endif %}
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <p class="text-muted small mt-3 mb-0" id="itineraryHint">
+        <i class="bi bi-info-circle me-1"></i> Click a block to view details. Drag an unscheduled activity onto a day to schedule it, click × to unschedule.
+      </p>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const trip = JSON.parse(document.getElementById('trip-context').textContent);
+
+  window.onBlockClick = function(activityId, tripId) {
+    openActivityModal({ activityId, icon: '', label: '', tripId });
+  };
+
+  async function assignActivity(activityId, date) {
+    const resp = await fetch(`/trip/${trip._id}/activity/${activityId}/assign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date }),
+    });
+    if (resp.ok) location.reload();
+    else alert('Failed to assign activity.');
+  }
+
+  // Bancada: origem do drag — só sai daqui, não recebe nada de volta
+  const bancadaList = document.getElementById('bancadaList');
+  if (bancadaList) {
+    new Sortable(bancadaList, {
+      group: { name: 'itinerary', pull: true, put: false },
+      sort: false,
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+    });
+  }
+
+  // Cada célula do calendário só aceita cards da mesma categoria
+  document.querySelectorAll('.drop-cell').forEach(cell => {
+    new Sortable(cell, {
+      group: {
+        name: 'itinerary',
+        pull: false,
+        put: (to, from, dragEl) => dragEl.dataset.category === cell.dataset.category,
+      },
+      sort: false,
+      filter: '.itinerary-block',
+      preventOnFilter: false,
+      animation: 150,
+      onAdd: function(evt) {
+        assignActivity(evt.item.dataset.activityId, cell.dataset.date);
+      },
+    });
+  });
+
+  window.unassignActivity = async function(activityId, tripId, btn) {
+    btn.disabled = true;
+    const resp = await fetch(`/trip/${tripId}/activity/${activityId}/unassign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (resp.ok) location.reload();
+    else { alert('Failed to unassign.'); btn.disabled = false; }
+  };
+});
+</script>
