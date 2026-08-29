@@ -1,11 +1,4 @@
- function scrollTrips(direction) {
-      const container = document.getElementById("trip-scroll-container");
-      const scrollAmount = 300;
-      container.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
+
 
 const currentRealYear = new Date().getFullYear();
 let currentYear = currentRealYear;

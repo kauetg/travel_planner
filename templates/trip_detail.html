@@ -1,282 +1,248 @@
 {% extends "base.html" %}
-
-{% block title %}Trip Planner{% endblock %}
+{% block title %}{{ trip.name }}{% endblock %}
 
 {% block content %}
 
 <div class="container py-4">
 
-    <!-- 📷 Cover Image with Overlaid Title -->
-    <div class="cover-header position-relative">
-        <img src="{{ trip.img | safe }}" class="img-fluid rounded-4 w-100">
-
-        <!-- Texto centralizado sobre a imagem -->
-        <div class="position-absolute top-35 start-50 translate-middle-x text-center px-3" style="width: 100%;">
-            <h1 class="cover-title">{{ trip.name }}</h1>
-        </div>
+  <!-- HERO -->
+  <div class="hero">
+    <img src="{{ trip.img | safe }}" alt="{{ trip.name }}">
+    <div class="trip-hero-title">{{ trip.name }}</div>
+    {% if trip.instagram_url or trip.youtube_url %}
+    <div class="hero-badges">
+      {% if trip.instagram_url %}
+      <a href="{{ trip.instagram_url }}" target="_blank" class="hero-badge hero-badge-ig" title="Instagram">
+        <i class="bi bi-instagram"></i>
+      </a>
+      {% endif %}
+      {% if trip.youtube_url %}
+      <a href="{{ trip.youtube_url }}" target="_blank" class="hero-badge hero-badge-yt" title="YouTube">
+        <i class="bi bi-youtube"></i>
+      </a>
+      {% endif %}
     </div>
-    <a href="{{ url_for('home.index') }}" class="btn btn-outline-secondary btn-sm rounded px-3 me-3 d-none d-lg-inline-flex">
-  ← Back
-</a>
+    {% endif %}
+  </div>
 
-    <!-- byline abaixo da imagem -->
-    <h4 class="text-end fst-italic text-muted small me-3 d-none d-lg-block" style="margin-top: -2rem;">
-        by BK adventures
-    </h4>
-
-    <!-- Fake spacing para compensar o overlay -->
-    <div style="height:80px;"></div>
-
-    <!-- 🟦 Painel 1 - Organizer Table -->
-    <div class="panel p-4 mb-4 bg-light rounded-4 shadow-sm">
-        <h2 class="mb-3">📋 Organizer</h2>
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <p class="text-muted mb-0">A table view of your daily plan, with drag-and-drop activities.</p>
-
-            <button class="btn btn-secondary" type="button" data-bs-toggle="offcanvas" data-bs-target="#drawerPanel"
-                    aria-controls="drawerPanel">
-                Edit
-            </button>
-        </div>
-
-        <!-- Drawer lateral -->
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="drawerPanel" aria-labelledby="drawerPanelLabel">
-            <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="drawerPanelLabel">Edit Activities</h5>
-                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"
-                        aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body">
-                <div class="accordion" id="drawerAccordion">
-                    {% for category in categories %}
-                    <div class="accordion-item mb-2">
-                        <h4 class="accordion-header" id="heading{{ loop.index }}">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapse{{ loop.index }}" aria-expanded="false"
-                                    aria-controls="collapse{{ loop.index }}">
-                                {{ category.label }}
-                            </button>
-                        </h4>
-                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse"
-                             aria-labelledby="heading{{ loop.index }}" data-bs-parent="#drawerAccordion">
-                            <div class="accordion-body">
-                                <div id="card-list-{{ category.category|lower|replace(' ', '-') }}">
-                                    {% for activity in trip.activities if activity.category == category.category %}
-                                    <div class="activity-item tag-{{ category.category }} d-flex align-items-center justify-content-between mb-2 p-2 rounded text-white"
-                                         role="button"
-                                         data-activity-id="{{ activity.id }}"
-                                         data-label="{{ activity.title }}"
-                                         data-icon="{{ activity.icon }}"
-                                         style="opacity: {{ '1' if activity.confirmed else '0.15' }};"
-                                    >
-                                        <div class="d-flex align-items-center gap-3">
-                                            <i class="{{ activity.icon }}"></i>
-                                            <span class="fw-semibold">{{ activity.title }}</span>
-                                        </div>
-                                    </div>
-                                    {% else %}
-                                    <div class="text-muted small">No activities yet.</div>
-                                    {% endfor %}
-                                </div>
-
-                                <button class="btn btn-sm btn-outline-primary mt-2 w-100"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#activityModal"
-                                        data-category="{{ category.category | lower | replace(' ', '_') }}"
-                                        data-label="{{ category.label }}"
-                                        data-icon="{{ category.icon }}"
-                                        data-trip-id=" {{ trip._id }}
-">
-                                    + Add {{ category.label }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <hr>
-                <div class="d-grid gap-2 mt-3">
-                    <button class="btn btn-outline-secondary" onclick="openEditTripModal('{{ trip._id }}')"><i class="bi bi-pencil me-3"></i>Edit Trip Info</button>
-                    <button class="btn btn-outline-secondary" onclick="openAddInfoModal('{{ trip._id }}')">
-                        <i class="bi bi-plus-circle me-3"></i> Add More Info
-                    </button>
-                    <!-- Mini-cards de informações extras -->
-                    {% if trip.extra_infos %}
-                    <div class="d-flex flex-column gap-2">
-                        {% for info in trip.extra_infos %}
-                        <div class="info-item d-flex flex-column p-3 rounded bg-white shadow-sm border text-dark">
-                            <!-- Título -->
-                            <div class="fw-semibold mb-1">{{ info.title }}</div>
-
-                            <!-- Observações -->
-                            {% if info.obs %}
-                            <div class="text-muted small mb-2">{{ info.obs }}</div>
-                            {% endif %}
-
-                            <!-- Botões: Link e Delete -->
-                            <div class="d-flex justify-content-end gap-2">
-                                {% if info.url %}
-                                <a href="{{ info.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-link-45deg me-1"></i> Link
-                                </a>
-                                {% endif %}
-
-                                <form method="POST"
-                                      action="{{ url_for('trip.delete_info', trip_id=trip._id, info_id=info.id) }}"
-                                      onsubmit="return confirm('Are you sure you want to delete this info?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash"></i> Del
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Tabela do Planner -->
-        <div class="content-wrapper">
-            <div class="table-responsive mt-4">
-                <table class="table table-bordered text-center align-middle">
-                    <thead class="table-light">
-                    <tr>
-                        <th class="bg-light text-center">Day</th>
-                        {% for i in range(1, trip.dates|length + 1) %}
-                        <th>{{ i }}</th>
-                        {% endfor %}
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for cat in categories %}
-                    <tr>
-                        <th class="bg-light align-middle text-center text-md-start">
-                            <!-- Ícone (sempre visível, centralizado em telas pequenas) -->
-                            <i class="bi {{ cat.icon }} me-2 d-inline d-md-inline text-center custom-icon custom-table-title"></i>
-                            <!-- Texto da categoria (escondido em telas pequenas) -->
-                            <span class="d-none d-md-inline custom-table-title">{{ cat.label }}</span>
-                        </th>
-
-                        {% for date in trip.dates %}
-                        <td data-date="{{ date }}" data-category="{{ cat.category }}" class="planner-cell"></td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                    <tr class="bg-white text-muted small">
-
-                        <th class="bg-light align-middle text-center text-md-start">
-                            <i class="bi bi-calendar-date-fill me-2 d-inline d-md-inline text-center custom-table-title"></i>
-                            <span class="d-none d-md-inline custom-table-title">Date</span>
-                        </th>
-                        {% for date in trip.dates_formatted %}
-                        <td class="text-center">{{ date }}</td>
-                        {% endfor %}
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <!-- 🗺️ Painel 2 - Mapa com seletor de dias -->
-        <div class="panel p-4 mb-4 bg-light rounded-4 shadow-sm">
-            <h2 class="mb-3">🗺️ Map & Days</h2>
-            <p class="text-muted">Select a day to explore locations on the map.</p>
-            <!-- TODO: seletor de dias + mapa -->
-            <div style="min-height: 300px; border: 1px dashed #ccc;" class="rounded p-3">Mapa vai aqui</div>
-        </div>
-
-        <!-- 💸 Painel 3 - Finanças -->
-        <div class="panel p-4 mb-4 bg-light rounded-4 shadow-sm">
-            <h2 class="mb-3">💸 Finances</h2>
-            <p class="text-muted">Track your trip spending by day and category.</p>
-            <!-- TODO: tabs com gastos -->
-            <div style="min-height: 200px; border: 1px dashed #ccc;" class="rounded p-3">Finanças vão aqui</div>
-        </div>
-        <div class="d-flex justify-content-end gap-2 mt-5">
-  <a href="{{ url_for('home.index') }}" class="btn btn-outline-secondary">
-    <i class="bi bi-arrow-left me-1"></i> Back
-  </a>
-
-  <form method="POST" action="{{ url_for('trip.delete_trip', trip_id=trip._id) }}"
-        onsubmit="return confirm('Are you sure you want to delete this trip? This action cannot be undone.');">
-    <button type="submit" class="btn btn-outline-danger">
-      <i class="bi bi-trash me-1"></i> Delete
-    </button>
-  </form>
-</div>
-
-    </div>
-    <div class="modal fade bd-example-modal-sm" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="activityModalLabel">Add Activity</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="modal-body-content">
-                    <!-- Form will be loaded here -->
-                    <div class="text-center text-muted py-3">
-                        <div class="spinner-border" role="status"></div>
-                        <p>Loading form...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="viewActivityModal" tabindex="-1" aria-labelledby="viewActivityModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="viewActivityModalLabel">Activity Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="view-activity-content">
-                    <div class="text-center">
-                        <div class="spinner-border" role="status"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="add-info-modal-container"></div>
-
-   <div class="modal fade" id="editTripModal" tabindex="-1" aria-labelledby="editTripModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-sm modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editTripModalLabel">Edit Trip</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body" id="edit-trip-content">
-        <div class="text-center py-3">
-          <div class="spinner-border" role="status"></div>
-          <p class="mt-2">Loading form...</p>
-        </div>
-      </div>
+  <!-- Barra de ações -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{{ url_for('home.index') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+    <div class="d-flex gap-2">
+      {% if trip.from_plan_id %}
+      <button class="btn btn-outline-secondary btn-sm" onclick="openEditPlanModal('{{ trip.from_plan_id }}')">
+        <i class="bi bi-lightbulb me-1"></i> View Plan
+      </button>
+      {% endif %}
+      <button class="btn btn-outline-secondary btn-sm" onclick="openMembersModal('{{ trip._id }}')">
+        <i class="bi bi-people-fill me-1"></i> Members
+      </button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="openEditTripModal('{{ trip._id }}')">
+        <i class="bi bi-pencil me-1"></i> Edit Trip
+      </button>
+      {% if trip.leader_id == current_user.id %}
+      <form method="POST" action="{{ url_for('trip.delete_trip', trip_id=trip._id) }}"
+            onsubmit="return confirm('Delete this trip?');">
+        <button type="submit" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-trash me-1"></i> Delete
+        </button>
+      </form>
+      {% endif %}
     </div>
   </div>
+
+  {% if trip.quote or trip.rating %}
+  <div class="trip-quote-card">
+    {% if trip.rating %}
+    <div class="trip-quote-stars">
+      {% for i in range(1, 6) %}
+      <i class="bi {{ 'bi-star-fill' if i <= trip.rating else 'bi-star' }}"></i>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if trip.quote %}
+    <div class="trip-quote-text">"{{ trip.quote }}"</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% include "trip/_card_activities.html" %}
+  {% include "trip/_card_itinerary.html" %}
+  {% include "trip/_card_map.html" %}
+  {% include "trip/_card_finances.html" %}
+
+  {% include "trip/_add_activity_modal.html" %}
+  {% include "trip/_modal_view_activity.html" %}
+  {% include "trip/_modal_edit_trip.html" %}
+  {% if trip.from_plan_id %}
+  {% include "_modal_plan.html" %}
+  {% endif %}
+
+  <div class="modal fade" id="membersModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" id="membersModal-body"></div>
+    </div>
+  </div>
+
 </div>
+
+<script id="trip-context" type="application/json">{{ trip | tojson }}</script>
+
 <script>
-  window.mapboxToken = "{{ current_app.config['MAPBOX_PUBLIC_TOKEN'] }}";
+document.addEventListener('DOMContentLoaded', function () {
+  const trip = JSON.parse(document.getElementById('trip-context').textContent);
+
+  // Chevron animado
+  document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(trigger => {
+    const target = document.querySelector(trigger.dataset.bsTarget);
+    const chevron = trigger.querySelector('.chevron');
+    if (!target || !chevron) return;
+    target.addEventListener('show.bs.collapse', () => chevron.classList.add('collapsed'));
+    target.addEventListener('hide.bs.collapse', () => chevron.classList.remove('collapsed'));
+  });
+
+  // Clique nos activity cards
+  document.querySelectorAll('.act-card').forEach(card => {
+    card.addEventListener('click', () => openActivityModal({
+      activityId: card.dataset.activityId,
+      icon:       card.dataset.icon,
+      label:      card.dataset.label,
+      tripId:     trip._id,
+    }));
+  });
+});
+
+function openActivityModal({ activityId, icon, label, tripId }) {
+  const modalEl = document.getElementById('viewActivityModal');
+  const modal   = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+  document.getElementById('viewActivityModal-body').innerHTML =
+    '<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
+  modal.show();
+  fetch(`/trip/${tripId}/activity/${activityId}`)
+    .then(r => r.text())
+    .then(html => { document.getElementById('viewActivityModal-body').innerHTML = html; })
+    .catch(() => { document.getElementById('viewActivityModal-body').innerHTML = '<p class="text-danger">Error.</p>'; });
+}
+
+function openEditTripModal(tripId) {
+  const modalEl = document.getElementById('editTripModal');
+  const modal   = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+  document.getElementById('editTripModal-body').innerHTML =
+    '<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
+  modal.show();
+  fetch(`/trip/${tripId}/edit`)
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('editTripModal-body').innerHTML = html;
+      if (window.initTripLocationMap) window.initTripLocationMap();
+    })
+    .catch(() => { document.getElementById('editTripModal-body').innerHTML = '<p class="text-danger">Error.</p>'; });
+}
+window.openEditTripModal = openEditTripModal;
+
+function openMembersModal(tripId) {
+  const modalEl = document.getElementById('membersModal');
+  const modal   = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+  document.getElementById('membersModal-body').innerHTML =
+    '<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
+  modal.show();
+  fetch(`/trip/${tripId}/members`)
+    .then(r => r.text())
+    .then(html => { document.getElementById('membersModal-body').innerHTML = html; })
+    .catch(() => { document.getElementById('membersModal-body').innerHTML = '<p class="text-danger">Error.</p>'; });
+}
+window.openMembersModal = openMembersModal;
+
+async function submitAddMember(event, tripId) {
+  event.preventDefault();
+  const errorEl = document.getElementById('add-member-error');
+  errorEl.textContent = '';
+
+  const fd = new FormData();
+  fd.append('email', document.getElementById('add-member-email').value.trim());
+
+  const resp = await fetch(`/trip/${tripId}/add_member`, { method: 'POST', body: fd });
+  if (resp.ok) {
+    location.reload();
+  } else {
+    const err = await resp.json();
+    errorEl.textContent = err.error || 'Failed to add member.';
+  }
+  return false;
+}
+window.submitAddMember = submitAddMember;
+
+async function removeMember(tripId, userId) {
+  const fd = new FormData();
+  fd.append('user_id', userId);
+  const resp = await fetch(`/trip/${tripId}/remove_member`, { method: 'POST', body: fd });
+  if (resp.ok) location.reload();
+  else alert('Failed to remove member.');
+}
+window.removeMember = removeMember;
+
+async function openEditActivity(activityId, tripId) {
+  bootstrap.Modal.getInstance(document.getElementById('viewActivityModal')).hide();
+
+  // Trava o Save assim que o usuário pede pra editar — antes mesmo do fetch
+  // terminar — pra não dar pra salvar em cima de um formulário ainda vazio
+  // ou de um mapa que ainda não carregou (o que estava corrompendo dados).
+  const saveBtn = document.getElementById('activitySaveBtn');
+  const saveBtnOriginalHTML = saveBtn.innerHTML;
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+
+  try {
+    const resp = await fetch(`/trip/${tripId}/activity/${activityId}?format=json`);
+    const act = await resp.json();
+
+    document.getElementById('act-title').value       = act.title    || '';
+    document.getElementById('act-category').value    = act.category || '';
+    document.getElementById('act-obs').value         = act.obs      || '';
+    document.getElementById('act-cost').value        = act.cost     || '';
+    document.getElementById('act-currency').value    = act.currency || 'USD';
+    document.getElementById('act-confirmed').checked = act.confirmed || false;
+    document.getElementById('act-date').value        = act.start_date || '';
+
+    document.getElementById('activityModalTitle').innerHTML =
+      `<i class="bi ${act.icon} me-2"></i> Edit: ${act.title}`;
+    document.getElementById('addActivityForm').dataset.editId = activityId;
+
+    // Mostra o modal ANTES de inicializar o mapa — o Leaflet precisa
+    // de um container já visível (com tamanho real) pra desenhar direito.
+    new bootstrap.Modal(document.getElementById('activityModal')).show();
+    onCategoryChange();
+
+    // Espera onCategoryChange() terminar de trocar as opções de tipo e
+    // inicializar o(s) mapa(s) (ela mesma usa um setTimeout(100) interno).
+    await new Promise(r => setTimeout(r, 200));
+
+    document.getElementById('act-type').value = act.type || '';
+
+    if (act.category === 'transportation') {
+      document.getElementById('dep-search').value = act.departure     || '';
+      document.getElementById('dep-lat').value    = act.departure_lat || '';
+      document.getElementById('dep-lon').value    = act.departure_lon || '';
+      document.getElementById('arr-search').value = act.arrival       || '';
+      document.getElementById('arr-lat').value    = act.arrival_lat   || '';
+      document.getElementById('arr-lon').value    = act.arrival_lon   || '';
+      window.centerActivityMap('dep', act.departure_lat, act.departure_lon);
+      window.centerActivityMap('arr', act.arrival_lat, act.arrival_lon);
+    } else {
+      document.getElementById('loc-search').value = act.address || '';
+      document.getElementById('loc-lat').value    = act.lat     || '';
+      document.getElementById('loc-lon').value    = act.lon     || '';
+      window.centerActivityMap('loc', act.lat, act.lon);
+      if (act.category === 'accommodation' || act.category === 'activity') {
+        document.getElementById('act-duration').value = act.duration || '';
+      }
+    }
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = saveBtnOriginalHTML;
+  }
+}
+window.openEditActivity = openEditActivity;
 </script>
 
-
-    <script id="trip-context" type="application/json">
-        {{
-            trip
-            |
-            tojson
-        }}
-    </script>
-
-    <script type="module" src="{{ url_for('static', filename='js/modals.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/planner.js') }}"></script>
-
-
-    {% endblock %}
+{% endblock %}

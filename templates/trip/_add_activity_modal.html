@@ -1,0 +1,334 @@
+{# trip/_add_activity_modal.html #}
+
+<div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-activity">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="activityModalTitle">
+          <i class="bi bi-plus-circle me-2"></i> Add Activity
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body modal-body-scroll">
+        <form id="addActivityForm" novalidate>
+
+          <!-- Nome + Categoria -->
+          <div class="row g-2 mb-3">
+            <div class="col-8">
+              <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="act-title" placeholder="e.g. Casa Daniel" required>
+            </div>
+            <div class="col-4">
+              <label class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+              <select class="form-select" id="act-category" onchange="onCategoryChange()">
+                <option value="">—</option>
+                <option value="transportation">✈️ Transport</option>
+                <option value="accommodation">🏨 Stay</option>
+                <option value="activity">🎯 Activity</option>
+                <option value="food">🍜 Food</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tipo -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Type</label>
+            <select class="form-select" id="act-type">
+              <option value="">— select category first —</option>
+            </select>
+          </div>
+
+          <!-- Custo + Moeda + Confirmado -->
+          <div class="row g-2 mb-3">
+            <div class="col-5">
+              <label class="form-label fw-semibold">Cost</label>
+              <input type="number" class="form-control" id="act-cost" min="0" step="0.01" placeholder="0.00">
+            </div>
+            <div class="col-4">
+              <label class="form-label fw-semibold">Currency</label>
+              <select class="form-select" id="act-currency">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="BRL">BRL</option>
+                <option value="THB">THB</option>
+                <option value="JPY">JPY</option>
+                <option value="GBP">GBP</option>
+                <option value="AUD">AUD</option>
+                <option value="IDR">IDR</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+            <div class="col-3 d-flex align-items-end pb-1">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="act-confirmed">
+                <label class="form-check-label small" for="act-confirmed">Confirmed</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dia -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Day <span class="text-muted small">(optional)</span></label>
+            <select class="form-select" id="act-date">
+              <option value="">— Unscheduled —</option>
+              {% for d in trip.dates %}
+              <option value="{{ d }}">Day {{ loop.index }} — {{ trip.dates_formatted[loop.index0] }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Observações -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea class="form-control" id="act-obs" rows="2" placeholder="Any notes..."></textarea>
+          </div>
+
+          <!-- Foto -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Photo <span class="text-muted small">(optional)</span></label>
+            <input type="file" class="form-control" id="act-photo" accept="image/*">
+          </div>
+
+          <hr>
+
+          <!-- MAPA: Transportation -->
+          <div id="map-transport" class="d-none">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">📍 Departure</label>
+              <div class="input-group mb-1">
+                <input type="text" class="form-control" id="dep-search" placeholder="Search departure...">
+                <button type="button" class="btn btn-outline-secondary" onclick="searchMap('dep')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div id="map-dep" class="map-mini mb-1"></div>
+              <input type="hidden" id="dep-lat">
+              <input type="hidden" id="dep-lon">
+              <small class="text-muted">Click on the map to pin exact location</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">📍 Arrival</label>
+              <div class="input-group mb-1">
+                <input type="text" class="form-control" id="arr-search" placeholder="Search arrival...">
+                <button type="button" class="btn btn-outline-secondary" onclick="searchMap('arr')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div id="map-arr" class="map-mini mb-1"></div>
+              <input type="hidden" id="arr-lat">
+              <input type="hidden" id="arr-lon">
+              <small class="text-muted">Click on the map to pin exact location</small>
+            </div>
+          </div>
+
+          <!-- MAPA: Outros -->
+          <div id="map-single" class="d-none">
+            <label class="form-label fw-semibold">📍 Location</label>
+            <div class="input-group mb-1">
+              <input type="text" class="form-control" id="loc-search" placeholder="Search location...">
+              <button type="button" class="btn btn-outline-secondary" onclick="searchMap('loc')">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div id="map-loc" class="map-single-view mb-1"></div>
+            <input type="hidden" id="loc-lat">
+            <input type="hidden" id="loc-lon">
+            <small class="text-muted">Click on the map to pin exact location</small>
+          </div>
+
+          <!-- Duration (accommodation e activity, pra liveaboards/multi-day trips etc.) -->
+          <div id="field-duration" class="mb-3 mt-3 d-none">
+            <label class="form-label fw-semibold">Duration (days)</label>
+            <input type="number" class="form-control" id="act-duration" min="1" placeholder="e.g. 3">
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary px-4" id="activitySaveBtn" onclick="submitActivity()">
+          <i class="bi bi-check-lg me-1"></i> Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const TYPES = {
+  transportation: ['Plane','Boat','Bus','Car','Other'],
+  accommodation:  ['Hotel','Airbnb','Friends House','Other'],
+  activity:       ['Tour','Dive','Museum','Hike','Other'],
+  food:           ['Full Meal','Snacks','Dessert','Other'],
+};
+
+let mapDep = null, mapArr = null, mapLoc = null;
+
+function initMap(containerId, latHiddenId, lonHiddenId) {
+  const m = L.map(containerId).setView([20, 10], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(m);
+
+  let marker = null;
+  m.on('click', function(e) {
+    const lat = e.latlng.lat.toFixed(6);
+    const lon = e.latlng.lng.toFixed(6);
+    document.getElementById(latHiddenId).value = lat;
+    document.getElementById(lonHiddenId).value = lon;
+    if (marker) marker.setLatLng(e.latlng);
+    else marker = L.marker(e.latlng).addTo(m);
+  });
+
+  return { map: m, getMarker: () => marker, setMarker: (mk) => { marker = mk; } };
+}
+
+async function searchMap(which) {
+  const searchIds = { dep: 'dep-search', arr: 'arr-search', loc: 'loc-search' };
+  const query = document.getElementById(searchIds[which]).value;
+  if (!query) return;
+
+  const resp = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`);
+  const data = await resp.json();
+  if (!data.length) { alert('Location not found'); return; }
+
+  const lat = parseFloat(data[0].lat);
+  const lon = parseFloat(data[0].lon);
+
+  const maps   = { dep: mapDep,   arr: mapArr,   loc: mapLoc   };
+  const latIds = { dep: 'dep-lat', arr: 'arr-lat', loc: 'loc-lat' };
+  const lonIds = { dep: 'dep-lon', arr: 'arr-lon', loc: 'loc-lon' };
+
+  const { map, getMarker, setMarker } = maps[which];
+  map.setView([lat, lon], 13);
+  document.getElementById(latIds[which]).value = lat.toFixed(6);
+  document.getElementById(lonIds[which]).value = lon.toFixed(6);
+
+  if (getMarker()) getMarker().setLatLng([lat, lon]);
+  else setMarker(L.marker([lat, lon]).addTo(map));
+}
+
+window.onCategoryChange = function() {
+  const cat = document.getElementById('act-category').value;
+
+  const typeSelect = document.getElementById('act-type');
+  typeSelect.innerHTML = TYPES[cat]
+    ? TYPES[cat].map(t => `<option value="${t}">${t}</option>`).join('')
+    : '<option value="">— select category first —</option>';
+
+  document.getElementById('map-transport').classList.toggle('d-none', cat !== 'transportation');
+  document.getElementById('map-single').classList.toggle('d-none', !cat || cat === 'transportation');
+  document.getElementById('field-duration').classList.toggle('d-none', cat !== 'accommodation' && cat !== 'activity');
+
+  setTimeout(() => {
+    if (cat === 'transportation') {
+      if (!mapDep) mapDep = initMap('map-dep', 'dep-lat', 'dep-lon');
+      if (!mapArr) mapArr = initMap('map-arr', 'arr-lat', 'arr-lon');
+      mapDep.map.invalidateSize();
+      mapArr.map.invalidateSize();
+    } else if (cat) {
+      if (!mapLoc) mapLoc = initMap('map-loc', 'loc-lat', 'loc-lon');
+      mapLoc.map.invalidateSize();
+    }
+  }, 100);
+}
+
+async function submitActivity() {
+  const trip  = JSON.parse(document.getElementById('trip-context').textContent);
+  const cat   = document.getElementById('act-category').value;
+  const title = document.getElementById('act-title').value.trim();
+
+  if (!title || !cat) { alert('Name and category are required!'); return; }
+
+  const fd = new FormData();
+  fd.append('title',     title);
+  fd.append('category',  cat);
+  fd.append('type',      document.getElementById('act-type').value);
+  fd.append('cost',      document.getElementById('act-cost').value || '0');
+  fd.append('currency',  document.getElementById('act-currency').value);
+  fd.append('confirmed', document.getElementById('act-confirmed').checked ? 'true' : 'false');
+  fd.append('obs',       document.getElementById('act-obs').value);
+  fd.append('start_date', document.getElementById('act-date').value);
+
+  const photo = document.getElementById('act-photo').files[0];
+  if (photo) fd.append('photo', photo);
+
+  if (cat === 'transportation') {
+    fd.append('departure',     document.getElementById('dep-search').value);
+    fd.append('departure_lat', document.getElementById('dep-lat').value);
+    fd.append('departure_lon', document.getElementById('dep-lon').value);
+    fd.append('arrival',       document.getElementById('arr-search').value);
+    fd.append('arrival_lat',   document.getElementById('arr-lat').value);
+    fd.append('arrival_lon',   document.getElementById('arr-lon').value);
+  } else {
+    fd.append('address', document.getElementById('loc-search').value);
+    fd.append('lat',     document.getElementById('loc-lat').value);
+    fd.append('lon',     document.getElementById('loc-lon').value);
+  }
+
+  if (cat === 'accommodation' || cat === 'activity') {
+    fd.append('duration', document.getElementById('act-duration').value || '');
+  }
+
+  const btn = document.getElementById('activitySaveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+
+  try {
+    const editId = document.getElementById('addActivityForm').dataset.editId;
+    const url = editId
+      ? `/trip/${trip._id}/update_activity/${editId}`
+      : `/trip/${trip._id}/add_activity`;
+
+    const resp = await fetch(url, { method: 'POST', body: fd });
+    if (resp.ok) {
+      location.reload();
+    } else {
+      const err = await resp.json();
+      alert(err.error || 'Failed to save activity.');
+    }
+  } catch(e) {
+    alert('Network error. Try again.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Save';
+  }
+}
+
+// Centraliza o mapa e planta o pin numa posição já conhecida (usado ao editar
+// uma atividade que já tem lat/lon salvos — antes só aparecia pin no clique).
+window.centerActivityMap = function(which, lat, lon) {
+  const maps = { dep: mapDep, arr: mapArr, loc: mapLoc };
+  const m = maps[which];
+  const latNum = parseFloat(lat), lonNum = parseFloat(lon);
+  if (!m || !latNum || !lonNum) return;
+
+  m.map.invalidateSize();
+  m.map.setView([latNum, lonNum], 13);
+  if (m.getMarker()) m.getMarker().setLatLng([latNum, lonNum]);
+  else m.setMarker(L.marker([latNum, lonNum]).addTo(m.map));
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('activityModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('addActivityForm').reset();
+    document.getElementById('act-type').innerHTML = '<option value="">— select category first —</option>';
+    document.getElementById('map-transport').classList.add('d-none');
+    document.getElementById('map-single').classList.add('d-none');
+    document.getElementById('field-duration').classList.add('d-none');
+    if (mapDep) { mapDep.map.remove(); mapDep = null; }
+    if (mapArr) { mapArr.map.remove(); mapArr = null; }
+    if (mapLoc) { mapLoc.map.remove(); mapLoc = null; }
+  });
+
+  // Rede de segurança: só quando o modal termina de fato de aparecer (fade
+  // completo) é que o tamanho do container fica 100% estável. Recalcular aqui
+  // evita o bug de tile "meio carregado" que só se corrigia trocando categoria.
+  document.getElementById('activityModal').addEventListener('shown.bs.modal', function () {
+    if (mapDep) mapDep.map.invalidateSize();
+    if (mapArr) mapArr.map.invalidateSize();
+    if (mapLoc) mapLoc.map.invalidateSize();
+  });
+});
+</script>

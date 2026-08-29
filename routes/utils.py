@@ -25,32 +25,6 @@ def upload_image_to_cloudinary(file):
 
 
 
-def get_location_data(location):
-    api_key = os.getenv("OPENCAGE_API_KEY")
-    url = "https://api.opencagedata.com/geocode/v1/json"
-    params = {
-        'q': location,
-        'key': api_key,
-        'language': 'en',   # nome dos países em inglês
-        'pretty': 1
-    }
-    response = requests.get(url, params=params)
-    data = response.json()
-
-    if data['results']:
-        result = data['results'][0]
-        components = result['components']
-
-        return {
-            'lat': result['geometry']['lat'],
-            'lng': result['geometry']['lng'],
-            'country': components.get('country'),
-            'country_code': components.get('country_code').upper()
-        }
-    else:
-        return response
-
-
 def currencies(country_name):
     # Lista base que sempre será exibida
     all_currencies = ["USD","SGD", "MYR", "BRL", "EUR"]
@@ -102,21 +76,27 @@ def convert_to_USD(value, currency):
     except:
         return 0
 
-icon_map = {
-        "Plane": "bi-airplane",
-        "Boat": "bi-life-preserver",
-        "Bus": "bi-bus-front",
-        "Car": "bi-car-front",
-        "Other": "bi-box",
-        "Tour": "bi-person-walking",
-        "Dive": "bi-droplet",
-        "Museum": "bi-bank",
-        "Hike": "bi-tree",
-        "Full Meal": "bi-egg-fried",
-        "Snacks": "bi-cup-straw",
-        "Desert": "bi-cup-hot",
-        "Hotel": "bi-house-door-fill",
-        "Airbnb": "bi-house-door-fill",
-        "Friends House": "bi-house-door-fill",
-    }
+DEFAULT_IMGS = {
+    "transportation": "/static/img/cards/default_transportation.png",
+    "accommodation":  "/static/img/cards/default_accommodation.png",
+    "activity":       "/static/img/cards/default_activity.png",
+    "food":           "/static/img/cards/default_food.png",
+}
 
+ICON_MAP = {
+    "Plane": "bi-airplane",
+    "Boat": "bi-life-preserver",
+    "Bus": "bi-bus-front",
+    "Car": "bi-car-front",
+    "Other": "bi-box",
+    "Tour": "bi-person-walking",
+    "Dive": "bi-droplet",
+    "Museum": "bi-bank",
+    "Hike": "bi-tree",
+    "Full Meal": "bi-egg-fried",
+    "Snacks": "bi-cup-straw",
+    "Dessert": "bi-cup-hot",
+    "Hotel": "bi-house-door-fill",
+    "Airbnb": "bi-house-door-fill",
+    "Friends House": "bi-house-door-fill",
+}

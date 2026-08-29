@@ -1,128 +1,323 @@
 {% extends "base.html" %}
-
 {% block title %}Trip Planner{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-
-    <!-- 📷 Cover Image with Overlaid Title -->
-    <div class="cover-header">
-        <img src="{{ url_for('static', filename='img/splashphoto-7856.jpg') }}">
-
-        <!-- Texto dentro da largura do container -->
-        <div class="position-absolute top-35 start-50 translate-middle-x text-center px-3" style="width: 100%;">
-            <h1 class="cover-title">
-                Trip Planner
-            </h1>
-        </div>
-    </div>
-    <h4 class="text-end fst-italic text-muted small  me-3 d-none d-lg-block" style="margin-top: -2rem;">
-        by BK adventures
-    </h4>
-    <!-- Distância fake pra compensar o título sobreposto -->
-    <div style="height:80px;"></div>
-
-
-    <!--</div>-->
-    <div class="text-center mb-5">
-        <button class="btn btn-primary btn-lg rounded-5 px-5 shadow" data-bs-toggle="modal"
-                data-bs-target="#addTripModal">
-            + Add New Trip
-        </button>
-    </div>
-
-    <!-- Modal Bootstrap -->
-    <div class="modal fade" id="addTripModal" tabindex="-1" aria-labelledby="addTripModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content">
-                <form method="POST" enctype="multipart/form-data" action="{{ url_for('home.add_or_update_trip') }}">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addTripModalLabel">Add New Trip</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        {% set action_url = url_for('home.add_or_update_trip') %}
-                        {% include "_trip_form.html" %}
-                    </div>
-
-                </form>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- 🎠 Carousel -->
-    <div class="mb-5">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="mb-0">Our Trips</h2>
-            <div>
-                <button class="btn btn-outline-secondary btn-sm me-2" onclick="scrollTrips('left')">‹</button>
-                <button class="btn btn-outline-secondary btn-sm" onclick="scrollTrips('right')">›</button>
-            </div>
-        </div>
-
-        <div id="trip-scroll-container" class="d-flex overflow-auto gap-4 pb-2">
-
-            {% for trip in trips %}
-            <a href="{{ url_for('trip.view_trip', trip_id=trip._id) }}" class="text-decoration-none text-dark">
-                <div class="trip-card bg-light rounded-4 shadow-sm p-3 text-center d-flex flex-column justify-content-between">
-                    <img src="{{ trip.img | safe }}" alt="Trip Image"
-                         class="rounded-4 mb-2 trip-img">
-                    <h4 class="fw-bold mb-1" style="font-family: 'Apricots', cursive;">
-                        {{ trip.name }}
-                    </h4>
-                    <div class="d-flex justify-content-between align-items-center w-100 px-2">
-                        <p class="text-muted small mb-0">{{ trip.start_date.strftime("%b-%Y") }}</p>
-                        <div class="flag-frame">
-                            <img src="https://flagsapi.com/{{ trip.country_code }}/flat/64.png"
-                                 alt="{{ trip.country_name }} Flag"
-                                 class="img-fluid">
-                        </div>
-                    </div>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-
-
-    <div class="d-flex justify-content-center align-items-center mb-4" id="yearNavigator">
-        <button id="prevYear" class="btn btn-outline-secondary btn-sm me-5">&lt;</button>
-        <h1 class="m-0" id="calendarTitle"><strong id="currentYear">2025</strong></h1>
-        <button id="nextYear" class="btn btn-outline-secondary btn-sm ms-5">&gt;</button>
-    </div>
-
-    <!-- 🗓 Calendar + 🗺 Map -->
-    <div class="row gy-4">
-        <div class="col-12 col-lg-6">
-            <div class="card h-100 shadow">
-                <div class="card-body">
-                    <h3 class="card-title" id="calendar_title">All Trips</h3>
-                    <div id="calendar" class="mt-5"></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-12 col-lg-6">
-            <div class="card h-100 shadow">
-                <div class="card-body">
-                    <h3 class="card-title">Trip Map</h3>
-
-                    <div id="map" style="height: 500px;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div>
-
 
 <script>
     const trips = {{ trips_json | safe }};
 </script>
 
-<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
-<script src="{{ url_for('static', filename='js/map_home.js') }}"></script>
-<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
 
+<div class="container py-4">
+
+    <!-- HERO -->
+    <div class="hero">
+        <img src="{{ url_for('static', filename='img/splashphoto-7856.jpg') }}" alt="cover">
+        <div class="hero-title">Trip Planner</div>
+    </div>
+
+    <!-- ADD TRIP -->
+    <div class="text-center mb-5">
+        <button class="btn btn-primary btn-lg rounded-5 px-5 shadow"
+                data-bs-toggle="modal" data-bs-target="#addTripModal">
+            + Add New Trip
+        </button>
+    </div>
+
+    <!-- MODAL ADD TRIP -->
+    {% include "_modal_add_trip.html" %}
+
+    <!-- MODAL PLAN -->
+    {% include "_modal_plan.html" %}
+
+    <!-- TOGGLE TRIPS / PLANS -->
+    <div class="d-flex justify-content-center mb-4">
+        <div class="home-toggle">
+            <button class="home-toggle-btn active" id="toggleTripsBtn" onclick="showHomeSection('trips')">Trips</button>
+            <button class="home-toggle-btn" id="togglePlansBtn" onclick="showHomeSection('plans')">Plans</button>
+        </div>
+    </div>
+
+    <div id="tripsSection">
+
+        <!-- SWIPER -->
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="mb-0">Our Trips</h2>
+                <div>
+                    <button class="btn btn-outline-secondary btn-sm me-2 swiper-prev-btn">‹</button>
+                    <button class="btn btn-outline-secondary btn-sm swiper-next-btn">›</button>
+                </div>
+            </div>
+            <div class="trips-swiper-outer">
+                <div class="swiper tripsSwiper">
+                    <div class="swiper-wrapper">
+                        {% for trip in trips %}
+                        <div class="swiper-slide">
+                            <a href="{{ url_for('trip.view_trip', trip_id=trip._id) }}" class="trip-card">
+                                <img src="{{ trip.img | safe }}" alt="{{ trip.name }}" class="trip-card-img">
+                                <div class="trip-card-body">
+                                    <div>
+                                        <h4 class="trip-card-name">{{ trip.name }}</h4>
+                                        <p class="trip-card-date">{{ trip.start_date.strftime("%b %Y") }}</p>
+                                    </div>
+                                    <div class="trip-card-flag">
+                                        <img src="https://flagsapi.com/{{ trip.country_code }}/flat/64.png"
+                                             alt="{{ trip.country_name }}">
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="swiper-pagination trips-pagination"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NAVEGAÇÃO DE ANO -->
+        <div class="year-nav-wrap">
+            <button class="btn btn-outline-secondary year-nav-btn" id="yearPrev" aria-label="Previous">‹</button>
+            <div class="year-label" id="yearLabel">All Trips</div>
+            <button class="btn btn-outline-secondary year-nav-btn" id="yearNext" aria-label="Next">›</button>
+        </div>
+
+        <!-- CALENDÁRIO + MAPA -->
+        <div class="card shadow h-100 mb-4">
+            <div class="card-body p-2">
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <div class="card shadow h-100">
+            <div class="card-body p-2">
+                <div id="calendar"></div>
+                <div id="allTripsList" class="d-none"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- OUR PLANS -->
+    <div id="plansSection" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0">Our Plans</h2>
+            <button class="btn btn-primary btn-sm rounded-pill px-3" onclick="openNewPlanModal()">
+                <i class="bi bi-plus-lg me-1"></i> New Plan
+            </button>
+        </div>
+        <div class="d-flex flex-wrap gap-3">
+            {% for plan in plans %}
+            <div class="plan-card" onclick="openEditPlanModal('{{ plan._id }}')">
+                {% if plan.img %}
+                <div class="plan-card-img" style="background-image: url('{{ plan.img | safe }}')"></div>
+                {% else %}
+                <div class="plan-card-img plan-card-img-placeholder"><i class="bi bi-map"></i></div>
+                {% endif %}
+                <div class="plan-card-title">{{ plan.title }}</div>
+                {% if plan.destination %}
+                <div class="plan-card-destination"><i class="bi bi-geo-alt"></i> {{ plan.destination }}</div>
+                {% endif %}
+                <div class="plan-card-dots">
+                    {% for key in ['transportation', 'accommodation', 'activity', 'food'] %}
+                    <span class="plan-dot cat-{{ key }} {{ 'plan-dot-filled' if plan.boxes and plan.boxes.get(key) }}"></span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% if not plans %}
+            <p class="text-muted small">No plans yet. Hit + New Plan to start jotting down ideas.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+<script>
+    window.showHomeSection = function (section) {
+      document.getElementById('tripsSection').classList.toggle('d-none', section !== 'trips');
+      document.getElementById('plansSection').classList.toggle('d-none', section !== 'plans');
+      document.getElementById('toggleTripsBtn').classList.toggle('active', section === 'trips');
+      document.getElementById('togglePlansBtn').classList.toggle('active', section === 'plans');
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+      // ── SWIPER ────────────────────────────────────────
+      new Swiper('.tripsSwiper', {
+        effect: 'coverflow',
+        coverflowEffect: { rotate: 30, stretch: 0, depth: 120, modifier: 1, slideShadows: false },
+        slidesPerView: 1.15,
+        centeredSlides: true,
+        spaceBetween: 20,
+        grabCursor: true,
+        observer: true,
+        observeParents: true,
+        pagination: { el: '.trips-pagination', clickable: true },
+        navigation: { prevEl: '.swiper-prev-btn', nextEl: '.swiper-next-btn' },
+        breakpoints: {
+          768: { slidesPerView: 2.2, spaceBetween: 24 },
+          992: { slidesPerView: 3.15, spaceBetween: 28 },
+        },
+      });
+
+      // ── FULLCALENDAR ─────────────────────────────────
+      function tripsToEvents(year) {
+        return trips
+          .filter(t => t.year == year)
+          .map(t => {
+            const endDate = new Date(t.dates[t.dates.length - 1]);
+            endDate.setDate(endDate.getDate() + 1);
+            return {
+              title: t.name,
+              start: t.dates[0],
+              end:   endDate.toISOString().split('T')[0],
+              url:   `/trip/${t._id}`,
+              color: '#ff914d',
+            };
+          });
+      }
+
+      const calendarEl = document.getElementById('calendar');
+      let calendar = null;
+
+      function ensureCalendar() {
+        if (calendar) return calendar;
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: isMobile ? 'dayGridMonth' : 'multiMonthYear',
+          multiMonthMaxColumns: 4,
+          headerToolbar: isMobile ? { left: 'prev', center: 'title', right: 'next' } : false,
+          eventClick: function(info) {
+            info.jsEvent.preventDefault();
+            if (info.event.url) window.location.href = info.event.url;
+          },
+          multiMonthTitleFormat: { month: 'short' },
+          height: 'auto',
+          locale: 'pt-br',
+        });
+        calendar.render();
+        return calendar;
+      }
+
+      function updateCalendar(year) {
+        const cal = ensureCalendar();
+        cal.removeAllEvents();
+        cal.addEventSource(tripsToEvents(year));
+        cal.gotoDate(`${year}-01-01`);
+        cal.updateSize();
+      }
+
+      // ── MAPA ─────────────────────────────────────────
+      const map = L.map('map', { minZoom: 2 }).setView([20, 10], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      const pinIcon = L.icon({
+        iconUrl: '/static/img/pin.png',
+        iconSize: [32, 50], iconAnchor: [16, 50], popupAnchor: [0, -50],
+      });
+
+      let markers = [];
+
+      function updateMap(state) {
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+        const filtered = state === 'all'
+          ? trips.filter(t => t.lat && t.lng)
+          : trips.filter(t => t.year == state && t.lat && t.lng);
+        const bounds = [];
+        filtered.forEach(t => {
+          const m = L.marker([t.lat, t.lng], { icon: pinIcon })
+            .bindPopup(`<strong>${t.name}</strong><br>${t.country_name}`)
+            .addTo(map);
+          markers.push(m);
+          bounds.push([t.lat, t.lng]);
+        });
+        if (bounds.length > 0) map.fitBounds(bounds, { padding: [40, 40] });
+        else map.setView([20, 10], 2);
+      }
+
+      // ── LISTA "ALL TRIPS" (sem ano definido pra mostrar num calendário) ──
+      function renderAllTripsList() {
+        const container = document.getElementById('allTripsList');
+        container.innerHTML = '';
+
+        const byYear = {};
+        trips.forEach(t => {
+          (byYear[t.year] = byYear[t.year] || []).push(t);
+        });
+
+        Object.keys(byYear).sort((a, b) => b - a).forEach(year => {
+          const section = document.createElement('div');
+          section.className = 'mb-3';
+          section.innerHTML = `<h6 class="all-trips-year-heading mb-2">${year}</h6>`;
+
+          byYear[year].forEach(t => {
+            const month = new Date(t.dates[0]).toLocaleString('pt-br', { month: 'short' });
+            const flag = t.country_code
+              ? `<img src="https://flagsapi.com/${t.country_code}/flat/32.png" width="24" height="24" style="border-radius:50%;" alt="">`
+              : '';
+            const row = document.createElement('a');
+            row.href = `/trip/${t._id}`;
+            row.className = 'd-flex justify-content-between align-items-center text-decoration-none text-dark mb-2 px-2 py-2 bg-white rounded shadow-sm';
+            row.innerHTML = `
+              <div>
+                <div class="fw-semibold">${t.name}</div>
+                <small class="text-muted">${month}${t.country_name ? ' – ' + t.country_name : ''}</small>
+              </div>
+              ${flag}
+            `;
+            section.appendChild(row);
+          });
+
+          container.appendChild(section);
+        });
+      }
+
+      // ── NAVEGAÇÃO DE ANO (só anos com viagem, começando em "All Trips") ──
+      const years = [...new Set(trips.map(t => t.year))].sort((a, b) => a - b);
+      const states = ['all', ...years];
+      let stateIdx = 0;
+
+      const yearLabel = document.getElementById('yearLabel');
+      const prevBtn   = document.getElementById('yearPrev');
+      const nextBtn   = document.getElementById('yearNext');
+
+      function applyState() {
+        const state = states[stateIdx];
+        const calendarViewEl = document.getElementById('calendar');
+        const listViewEl     = document.getElementById('allTripsList');
+
+        if (state === 'all') {
+          yearLabel.textContent = 'All Trips';
+          calendarViewEl.classList.add('d-none');
+          listViewEl.classList.remove('d-none');
+          renderAllTripsList();
+        } else {
+          yearLabel.textContent = state;
+          calendarViewEl.classList.remove('d-none');
+          listViewEl.classList.add('d-none');
+          updateCalendar(state);
+        }
+
+        updateMap(state);
+        prevBtn.disabled = stateIdx === 0;
+        nextBtn.disabled = stateIdx === states.length - 1;
+      }
+
+      prevBtn.addEventListener('click', () => { if (stateIdx > 0) { stateIdx--; applyState(); } });
+      nextBtn.addEventListener('click', () => { if (stateIdx < states.length - 1) { stateIdx++; applyState(); } });
+
+      applyState();
+
+    });
+</script>
 
 {% endblock %}

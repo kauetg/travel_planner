@@ -1,0 +1,217 @@
+{% set cat_color = {
+  'transportation': '#496099',
+  'accommodation':  '#D63E54',
+  'activity':       '#F7E08A',
+  'food':           '#76c3db'
+}.get(activity.category, '#888') %}
+
+{% set cat_icon = {
+  'transportation': 'bi-airplane-fill',
+  'accommodation':  'bi-house-door-fill',
+  'activity':       'bi-camera-fill',
+  'food':           'bi-cup-hot-fill'
+}.get(activity.category, 'bi-geo') %}
+
+{% set lat = activity.lat or activity.arrival_lat %}
+{% set lon = activity.lon or activity.arrival_lon %}
+{% set photo = activity.img or activity.photo or url_for('static', filename='img/cards/default_' ~ activity.category ~ '.png') %}
+
+<style>
+  .view-act-wrap { background: {{ cat_color }}; border-radius: 1rem; padding: 1rem 1rem 0; }
+
+  #actMediaCarousel .carousel-item img,
+  #actMediaCarousel .carousel-item iframe {
+    width: 100%; height: 300px; object-fit: cover;
+    border-radius: 0.75rem; display: block; border: none;
+  }
+  .map-open-btn { border-radius: 0 0 0.75rem 0.75rem !important; margin-top: -4px; }
+
+  .view-act-cards {
+    display: grid; grid-template-columns: 1fr 2fr;
+    gap: 1rem; padding: 1rem 0;
+  }
+  .view-act-title-card {
+    background: #fff; border-radius: 0.75rem; padding: 1.5rem 1rem;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; gap: 0.65rem;
+  }
+  .view-act-title-card .act-cat-icon { font-size: 2.8rem; color: {{ cat_color }}; }
+
+  .act-title { font-family: 'Apricots', cursive; font-size: 1.8rem; color: #222; line-height: 1.2; }
+  .act-type {
+    font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: #fff; background: {{ cat_color }};
+    padding: 0.25rem 0.7rem; border-radius: 2rem;
+  }
+  .act-confirm-pill {
+    border: none; background: #f0f0f0; color: #999;
+    font-size: 0.72rem; font-weight: 600;
+    padding: 0.25rem 0.75rem; border-radius: 2rem;
+    display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+  .act-confirm-pill:hover { background: #e6e6e6; }
+  .act-confirm-pill-on { background: #e6f7ee; color: #2e8b57; }
+  .act-confirm-pill-on:hover { background: #d8f2e5; }
+  .view-act-info-card {
+    background: #fff; border-radius: 0.75rem;
+    padding: 1.25rem 1.1rem; display: flex; flex-direction: column; gap: 0.65rem;
+  }
+  .view-act-info-row { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.92rem; color: #444; }
+  .view-act-info-row i { color: {{ cat_color }}; flex-shrink: 0; margin-top: 2px; font-size: 1.05rem; }
+  .view-act-map-link { color: inherit; text-decoration: underline; text-decoration-style: dotted; }
+  .view-act-map-link:hover { color: {{ cat_color }}; }
+  .view-act-highlight { font-size: 1.15rem; font-weight: 700; color: #222; }
+  .view-act-actions {
+    display: flex; justify-content: flex-end;
+    gap: 0.5rem; padding: 0.75rem 1rem; ;
+  }
+  @media (max-width: 480px) { .view-act-cards { grid-template-columns: 1fr; } }
+</style>
+
+<div class="view-act-wrap">
+
+  <!-- Carousel: Foto + Mapa -->
+  <div id="actMediaCarousel" class="carousel slide" data-bs-ride="false">
+
+    {% if lat and lon %}
+    <div class="carousel-indicators">
+      <button type="button" data-bs-target="#actMediaCarousel" data-bs-slide-to="0" class="active"></button>
+      <button type="button" data-bs-target="#actMediaCarousel" data-bs-slide-to="1"></button>
+    </div>
+    {% endif %}
+
+    <div class="carousel-inner">
+      <!-- Slide 1: Foto -->
+      <div class="carousel-item active">
+        <img src="{{ photo }}" alt="{{ activity.title }}">
+      </div>
+
+      <!-- Slide 2: Mapa -->
+      {% if lat and lon %}
+      <div class="carousel-item">
+        <iframe
+          src="https://maps.google.com/maps?q={{ lat }},{{ lon }}&z=15&output=embed"
+          loading="lazy">
+        </iframe>
+        <a href="https://www.google.com/maps/search/?api=1&query={{ lat }},{{ lon }}"
+           target="_blank" class="btn btn-sm btn-light w-100 map-open-btn">
+          <i class="bi bi-map me-1"></i> Open in Google Maps
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if lat and lon %}
+    <button class="carousel-control-prev" type="button" data-bs-target="#actMediaCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#actMediaCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon"></span>
+    </button>
+    {% endif %}
+
+  </div>
+
+  <!-- Dois cards -->
+  <div class="view-act-cards">
+
+    <div class="view-act-title-card">
+      <i class="bi act-cat-icon {{ activity.icon or cat_icon }}"></i>
+      <div class="act-title">{{ activity.title }}</div>
+      <span class="act-type">{{ activity.type }}</span>
+      {% if activity.confirmed %}
+<form method="POST" action="{{ url_for('trip.unconfirm_activity', trip_id=trip._id, activity_id=activity.id) }}">
+  <button type="submit" class="act-confirm-pill act-confirm-pill-on">
+    <i class="bi bi-check-circle-fill"></i> Confirmed
+  </button>
+</form>
+{% else %}
+<form method="POST" action="{{ url_for('trip.confirm_activity', trip_id=trip._id, activity_id=activity.id) }}">
+  <button type="submit" class="act-confirm-pill">
+    <i class="bi bi-circle"></i> Unconfirmed
+  </button>
+</form>
+{% endif %}
+    </div>
+
+    <div class="view-act-info-card">
+      {% if activity.address %}
+      <div class="view-act-info-row">
+        <i class="bi bi-geo-alt-fill"></i>
+        {% if activity.lat and activity.lon %}
+        <a href="https://www.google.com/maps?q={{ activity.lat }},{{ activity.lon }}" target="_blank" class="view-act-map-link">{{ activity.address }}</a>
+        {% else %}
+        <span>{{ activity.address }}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if activity.departure %}
+      <div class="view-act-info-row">
+        <i class="bi bi-box-arrow-right"></i>
+        <span><strong>From:</strong>
+          {% if activity.departure_lat and activity.departure_lon %}
+          <a href="https://www.google.com/maps?q={{ activity.departure_lat }},{{ activity.departure_lon }}" target="_blank" class="view-act-map-link">{{ activity.departure }}</a>
+          {% else %}
+          {{ activity.departure }}
+          {% endif %}
+        </span>
+      </div>
+      {% endif %}
+      {% if activity.arrival %}
+      <div class="view-act-info-row">
+        <i class="bi bi-box-arrow-in-left"></i>
+        <span><strong>To:</strong>
+          {% if activity.arrival_lat and activity.arrival_lon %}
+          <a href="https://www.google.com/maps?q={{ activity.arrival_lat }},{{ activity.arrival_lon }}" target="_blank" class="view-act-map-link">{{ activity.arrival }}</a>
+          {% else %}
+          {{ activity.arrival }}
+          {% endif %}
+        </span>
+      </div>
+      {% endif %}
+      {% if activity.duration %}
+      <div class="view-act-info-row">
+        <i class="bi bi-clock"></i>
+        <span class="view-act-highlight">{{ activity.duration }}
+          {% if activity.category == 'accommodation' %}{{ 'night' if activity.duration == 1 else 'nights' }}
+          {% elif activity.category == 'transportation' %}{{ 'hour' if activity.duration == 1 else 'hours' }}
+          {% else %}{{ 'day' if activity.duration == 1 else 'days' }}
+          {% endif %}
+        </span>
+      </div>
+      {% endif %}
+      {% if activity.cost %}
+      <div class="view-act-info-row">
+        <i class="bi bi-currency-dollar"></i>
+        <span class="view-act-highlight">{{ activity.currency }} {{ '%.2f' | format(activity.cost) }}
+          {% if activity.currency != 'USD' %}
+          <span class="text-muted fw-normal">(USD {{ '%.2f' | format(activity.cost_in_USD or 0) }})</span>
+          {% endif %}
+        </span>
+      </div>
+      {% endif %}
+      {% if activity.obs %}
+      <div class="view-act-info-row">
+        <i class="bi bi-info-circle"></i><span>{{ activity.obs }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<!-- Botões -->
+<div class="view-act-actions">
+  <button type="button" class="btn btn-light btn-sm"
+          onclick="openEditActivity('{{ activity.id }}', '{{ trip._id }}')">
+    <i class="bi bi-pencil"></i>
+  </button>
+  <form method="POST"
+        action="{{ url_for('trip.delete_activity', trip_id=trip._id, activity_id=activity.id) }}"
+        onsubmit="return confirm('Delete this activity?');"
+        style="margin:0;">
+    <button type="submit" class="btn btn-danger btn-sm">
+      <i class="bi bi-trash"></i>
+    </button>
+  </form>
+</div>

@@ -1,0 +1,211 @@
+<style>
+  #trip-map {
+    height: 420px;
+    border-radius: 0.75rem;
+  }
+
+  @media (max-width: 768px) {
+    #trip-map { height: 300px; }
+  }
+
+  .trip-pin {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+
+  .trip-pin:hover {
+    transform: scale(1.1);
+  }
+</style>
+
+<div class="section-card card">
+  <div class="card-header" data-bs-toggle="collapse" data-bs-target="#mapBody">
+    <h2><i class="bi bi-map-fill"></i> Map</h2>
+    <i class="bi bi-chevron-down chevron"></i>
+  </div>
+
+  <div class="collapse show" id="mapBody">
+    <div class="card-body">
+
+      <!-- Filters -->
+      <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+
+        <!-- Category Buttons -->
+        <button class="btn btn-sm btn-outline-secondary active"
+                data-category="all"
+                onclick="setCategory('all')">
+          All
+        </button>
+
+        {% for cat in categories %}
+        <button class="btn btn-sm btn-outline-secondary"
+                data-category="{{ cat.category }}"
+                onclick="setCategory('{{ cat.category }}')">
+          <i class="bi {{ cat.icon }} me-1"></i>{{ cat.label }}
+        </button>
+        {% endfor %}
+
+        <!-- Day Dropdown -->
+        <select class="form-select form-select-sm w-auto ms-auto"
+                onchange="setDate(this.value)">
+          <option value="all">All Days</option>
+          {% for d in trip.dates %}
+          <option value="{{ d }}">{{ d }}</option>
+          {% endfor %}
+        </select>
+
+      </div>
+
+      <div id="trip-map"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const trip = JSON.parse(document.getElementById('trip-context').textContent);
+
+  const map = L.map('trip-map', { minZoom: 2 });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap & CartoDB'
+  }).addTo(map);
+
+  const catColors = {
+    transportation: '#496099',
+    accommodation:  '#D63E54',
+    activity:       '#F7E08A',
+    food:           '#76c3db',
+  };
+
+  const markers = [];
+
+  let currentCategory = 'all';
+  let currentDate = 'all';
+
+  function isFarFromTrip(lat, lon) {
+    if (!trip.lat || !trip.lng) return false;
+
+    const center = L.latLng(trip.lat, trip.lng);
+    const point = L.latLng(lat, lon);
+
+    return center.distanceTo(point) > 400000; // 400km threshold
+  }
+
+  function addMarker(lat, lon, act) {
+
+    const color = catColors[act.category] || '#6c757d';
+
+    const icon = L.divIcon({
+      className: '',
+      html: `
+        <div class="trip-pin"
+             style="background:${color}"
+             data-category="${act.category}"
+             data-date="${act.start_date}">
+          <i class="bi ${act.icon}"></i>
+        </div>
+      `,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
+
+    const marker = L.marker([lat, lon], { icon })
+      .bindPopup(`
+        <div>
+          <strong>${act.title}</strong><br>
+          <small class="text-muted">${act.start_date}</small>
+        </div>
+      `)
+      .addTo(map);
+
+    markers.push({
+      marker,
+      category: act.category,
+      date: act.start_date
+    });
+  }
+
+  trip.activities.forEach(act => {
+
+    if (act.category === 'transportation') {
+
+      const depLat = parseFloat(act.departure_lat);
+      const depLon = parseFloat(act.departure_lon);
+      const arrLat = parseFloat(act.arrival_lat);
+      const arrLon = parseFloat(act.arrival_lon);
+
+      if (depLat && depLon && !isFarFromTrip(depLat, depLon)) {
+        addMarker(depLat, depLon, act);
+      }
+
+      if (arrLat && arrLon) {
+        addMarker(arrLat, arrLon, act);
+      }
+
+      return;
+    }
+
+    const lat = parseFloat(act.lat);
+    const lon = parseFloat(act.lon);
+
+    if (lat && lon) {
+      addMarker(lat, lon, act);
+    }
+  });
+
+  // Initial zoom
+  if (trip.lat && trip.lng) {
+    map.setView([trip.lat, trip.lng], 11);
+  } else if (markers.length) {
+    const bounds = markers.map(m => m.marker.getLatLng());
+    map.fitBounds(bounds, { padding: [40, 40] });
+  } else {
+    map.setView([20, 10], 2);
+  }
+
+  function filterMap() {
+    markers.forEach(obj => {
+
+      const matchCategory =
+        currentCategory === 'all' || obj.category === currentCategory;
+
+      const matchDate =
+        currentDate === 'all' || obj.date === currentDate;
+
+      if (matchCategory && matchDate) {
+        obj.marker.addTo(map);
+      } else {
+        map.removeLayer(obj.marker);
+      }
+
+    });
+  }
+
+  window.setCategory = function(category) {
+    currentCategory = category;
+
+    document.querySelectorAll('[data-category]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.category === category);
+    });
+
+    filterMap();
+  }
+
+  window.setDate = function(date) {
+    currentDate = date;
+    filterMap();
+  }
+
+});
+</script>

@@ -1,0 +1,94 @@
+{# trip/_trip_form.html #}
+
+<div class="modal-header">
+  <h5 class="modal-title">{{ 'Edit Trip' if trip else 'Add New Trip' }}</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+  <form method="POST" enctype="multipart/form-data" action="{{ url_for('home.add_or_update_trip') }}">
+    {% if trip %}
+    <input type="hidden" name="trip_id" value="{{ trip._id }}">
+    {% endif %}
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Trip Name</label>
+      <input type="text" name="name" class="form-control" required
+             value="{{ trip.name if trip else '' }}">
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label fw-semibold">Start Date</label>
+        <input type="date" name="start_date" class="form-control"
+               value="{{ trip.start_date.strftime('%Y-%m-%d') if trip and trip.start_date else '' }}">
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-semibold">End Date</label>
+        <input type="date" name="end_date" class="form-control"
+               value="{{ trip.end_date.strftime('%Y-%m-%d') if trip and trip.end_date else '' }}">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Location</label>
+      <div class="input-group mb-1">
+        <input type="text" name="location" id="trip-loc-search" class="form-control"
+               placeholder="Search a place..." value="{{ trip.location if trip else '' }}">
+        <button type="button" class="btn btn-outline-secondary" id="trip-loc-search-btn">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+      <div id="trip-loc-map" class="map-mini mb-1"></div>
+      <input type="hidden" name="lat" id="trip-lat" value="{{ trip.lat if trip else '' }}">
+      <input type="hidden" name="lng" id="trip-lng" value="{{ trip.lng if trip else '' }}">
+      <input type="hidden" name="country_name" id="trip-country-name" value="{{ trip.country_name if trip else '' }}">
+      <input type="hidden" name="country_code" id="trip-country-code" value="{{ trip.country_code if trip else '' }}">
+      <small class="text-muted">Search or click the map to pin the exact spot</small>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Cover Image</label>
+      <input type="file" name="image" accept="image/*" class="form-control">
+      {% if trip and trip.img %}
+      <small class="text-muted mt-1 d-block">
+        Current: <a href="{{ trip.img }}" target="_blank" class="text-decoration-underline">View</a>
+      </small>
+      {% endif %}
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-6">
+        <label class="form-label fw-semibold">Instagram <span class="text-muted small">(optional)</span></label>
+        <input type="url" name="instagram_url" class="form-control" placeholder="https://instagram.com/p/..."
+               value="{{ trip.instagram_url if trip else '' }}">
+      </div>
+      <div class="col-6">
+        <label class="form-label fw-semibold">YouTube <span class="text-muted small">(optional)</span></label>
+        <input type="url" name="youtube_url" class="form-control" placeholder="https://youtu.be/..."
+               value="{{ trip.youtube_url if trip else '' }}">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold d-block">Overall Rating <span class="text-muted small">(optional)</span></label>
+      <div class="star-rating">
+        {% for i in range(5, 0, -1) %}
+        <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}" {{ 'checked' if trip and trip.rating == i }}>
+        <label for="star{{ i }}">★</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Trip Quote <span class="text-muted small">(optional)</span></label>
+      <textarea name="quote" class="form-control" rows="2" placeholder="A memorable line about this trip...">{{ trip.quote if trip else '' }}</textarea>
+    </div>
+
+    <div class="text-end">
+      <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+      <button type="submit" class="btn btn-primary px-4">Save Trip</button>
+    </div>
+
+  </form>
+</div>
