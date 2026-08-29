@@ -33,7 +33,7 @@ def login():
         doc = db.users.find_one({"email": email})
 
         if doc and check_password_hash(doc["password_hash"], password):
-            login_user(User(doc))
+            login_user(User(doc), remember=True)
             return redirect(url_for("home.index"))
 
         flash("Invalid email or password.")
