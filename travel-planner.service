@@ -3,10 +3,10 @@ Description=Travel Planner (Flask + Gunicorn)
 After=network.target
 
 [Service]
-User=pi
-WorkingDirectory=/home/pi/travel_planner
-EnvironmentFile=/home/pi/travel_planner/.env
-ExecStart=/home/pi/travel_planner/.venv/bin/gunicorn -w 2 -b 0.0.0.0:5001 wsgi:app
+User=kauesenger
+WorkingDirectory=/home/kauesenger/travel_planner
+EnvironmentFile=/home/kauesenger/travel_planner/.env
+ExecStart=/home/kauesenger/travel_planner/venv/bin/gunicorn -w 2 -b 0.0.0.0:5001 wsgi:app
 Restart=always
 RestartSec=5
 
