@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  trip.activities.forEach(act => {
+  (trip.activities || []).forEach(act => {
 
     if (act.category === 'transportation') {
 

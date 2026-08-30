@@ -16,11 +16,24 @@
   background: #fff; border-bottom: 1px solid #eee;
   padding: 0.6rem 0;
 }
-.app-topbar-brand {
-  font-family: 'Apricots', cursive; font-size: 1.3rem;
-  color: #ff914d; text-decoration: none;
+.app-topbar-inner {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.5rem;
 }
-.app-topbar-email { font-size: 0.85rem; color: #888; }
+.app-topbar-side { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.app-topbar-side-right { justify-self: end; }
+.app-topbar-brand {
+  display: flex; align-items: center; gap: 0.5rem; justify-self: center;
+  font-family: 'Apricots', cursive; font-size: 1.3rem;
+  color: #ff914d; text-decoration: none; white-space: nowrap;
+}
+.app-topbar-logo { height: 40px; width: 40px; object-fit: contain; }
+.app-topbar-email { font-size: 0.85rem; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 576px) {
+  .app-topbar-brand { font-size: 1.1rem; }
+  .app-topbar-logo { height: 26px; width: 26px; }
+  .app-topbar-email { display: none; }
+}
 
 /* ════════════════════════════════════════════════════
    BASE
@@ -123,6 +136,7 @@ h1, h2, h3 {
 .trip-card-name { font-family: 'Apricots', cursive; font-size: 1.4rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .trip-card-date { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
 
+.trips-pagination { bottom: -2rem !important; }
 .trips-pagination .swiper-pagination-bullet { background: #bbb; opacity: 1; }
 .trips-pagination .swiper-pagination-bullet-active { background: #ff914d; width: 20px; border-radius: 4px; transition: width 0.3s; }
 
@@ -335,7 +349,7 @@ input[readonly], select[disabled], textarea[readonly] {
 }
 .trip-quote-stars { color: #ffb400; font-size: 1.1rem; margin-bottom: 0.4rem; }
 .trip-quote-stars i { margin: 0 1px; }
-.trip-quote-text { font-family: 'Apricots', cursive; font-size: 1.3rem; color: #444; }
+.trip-quote-text { font-family: 'Caveat', cursive; font-size: 1.6rem; font-weight: 700; color: #444; }
 
 /* ════════════════════════════════════════════════════
    HERO BADGES (Instagram / YouTube)

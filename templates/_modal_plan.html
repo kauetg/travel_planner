@@ -66,6 +66,9 @@
           <button type="button" class="btn btn-outline-danger btn-sm d-none" id="plan-delete-btn">
             <i class="bi bi-trash me-1"></i> Delete
           </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="plan-members-btn">
+            <i class="bi bi-people-fill me-1"></i> Members
+          </button>
           <button type="button" class="btn btn-outline-primary btn-sm d-none" id="plan-convert-btn">
             <i class="bi bi-arrow-right-circle me-1"></i> Convert to Trip
           </button>
@@ -73,6 +76,12 @@
         <button type="button" class="btn btn-primary px-4" id="plan-save-btn">Save Plan</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal fade" id="planMembersModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" id="planMembersModal-body"></div>
   </div>
 </div>
 
@@ -134,6 +143,7 @@ function openNewPlanModal() {
   document.getElementById('planModalTitle').textContent = 'New Plan';
   document.getElementById('plan-todos-section').classList.add('d-none');
   document.getElementById('plan-delete-btn').classList.add('d-none');
+  document.getElementById('plan-members-btn').classList.add('d-none');
   document.getElementById('plan-convert-btn').classList.add('d-none');
   new bootstrap.Modal(document.getElementById('planModal')).show();
 }
@@ -204,6 +214,7 @@ async function openEditPlanModal(planId) {
 
   document.getElementById('plan-todos-section').classList.remove('d-none');
   document.getElementById('plan-delete-btn').classList.remove('d-none');
+  document.getElementById('plan-members-btn').classList.remove('d-none');
   document.getElementById('plan-convert-btn').classList.toggle('d-none', !!plan.converted_trip_id);
   renderPlanTodos(plan.todos || []);
 
@@ -261,6 +272,12 @@ document.addEventListener('DOMContentLoaded', function () {
     else alert('Failed to delete plan.');
   });
 
+  document.getElementById('plan-members-btn').addEventListener('click', function () {
+    const planId = document.getElementById('plan-id').value;
+    bootstrap.Modal.getInstance(document.getElementById('planModal')).hide();
+    setTimeout(() => openPlanMembersModal(planId), 400);
+  });
+
   document.getElementById('plan-convert-btn').addEventListener('click', async function () {
     const planId = document.getElementById('plan-id').value;
     const resp = await fetch(`/plan/${planId}/convert`, { method: 'POST' });
@@ -288,4 +305,45 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
 });
+
+function openPlanMembersModal(planId) {
+  const modalEl = document.getElementById('planMembersModal');
+  const modal   = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+  document.getElementById('planMembersModal-body').innerHTML =
+    '<div class="text-center py-3"><div class="spinner-border" role="status"></div></div>';
+  modal.show();
+  fetch(`/plan/${planId}/members`)
+    .then(r => r.text())
+    .then(html => { document.getElementById('planMembersModal-body').innerHTML = html; })
+    .catch(() => { document.getElementById('planMembersModal-body').innerHTML = '<p class="text-danger">Error.</p>'; });
+}
+window.openPlanMembersModal = openPlanMembersModal;
+
+async function submitAddPlanMember(event, planId) {
+  event.preventDefault();
+  const errorEl = document.getElementById('add-plan-member-error');
+  errorEl.textContent = '';
+
+  const fd = new FormData();
+  fd.append('email', document.getElementById('add-plan-member-email').value.trim());
+
+  const resp = await fetch(`/plan/${planId}/add_member`, { method: 'POST', body: fd });
+  if (resp.ok) {
+    openPlanMembersModal(planId);
+  } else {
+    const err = await resp.json();
+    errorEl.textContent = err.error || 'Failed to add member.';
+  }
+  return false;
+}
+window.submitAddPlanMember = submitAddPlanMember;
+
+async function removePlanMember(planId, userId) {
+  const fd = new FormData();
+  fd.append('user_id', userId);
+  const resp = await fetch(`/plan/${planId}/remove_member`, { method: 'POST', body: fd });
+  if (resp.ok) openPlanMembersModal(planId);
+  else alert('Failed to remove member.');
+}
+window.removePlanMember = removePlanMember;
 </script>

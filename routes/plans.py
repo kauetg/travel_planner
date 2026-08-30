@@ -2,7 +2,7 @@ import uuid
 import bleach
 from datetime import datetime, timezone
 
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, render_template
 from flask_login import login_required, current_user
 from bson import ObjectId
 
@@ -76,6 +76,61 @@ def get_plan(plan_id):
     db = current_app.db
     plan = get_plan_or_403(db, plan_id)
     return jsonify(serialize_plan(plan))
+
+
+@plan_bp.route('/<plan_id>/members', methods=['GET'])
+@login_required
+def members_modal(plan_id):
+    db = current_app.db
+    plan = get_plan_or_403(db, plan_id)
+
+    members = list(db.users.find({"_id": {"$in": plan.get("member_ids", [])}}))
+    for m in members:
+        m["_id"] = str(m["_id"])
+
+    is_leader = str(plan.get("leader_id")) == current_user.id
+    return render_template(
+        "plan/_modal_members.html",
+        plan_id=str(plan["_id"]),
+        members=members,
+        is_leader=is_leader,
+        leader_id=str(plan.get("leader_id")),
+    )
+
+
+@plan_bp.route('/<plan_id>/add_member', methods=['POST'])
+@login_required
+def add_member(plan_id):
+    db = current_app.db
+    get_plan_or_403(db, plan_id, leader_only=True)
+
+    email = request.form.get("email", "").strip().lower()
+    user = db.users.find_one({"email": email})
+    if not user:
+        return jsonify({"error": f"No account with email {email} yet. Create one first."}), 404
+
+    db.plans.update_one(
+        {"_id": ObjectId(plan_id)},
+        {"$addToSet": {"member_ids": user["_id"]}}
+    )
+    return jsonify({"ok": True})
+
+
+@plan_bp.route('/<plan_id>/remove_member', methods=['POST'])
+@login_required
+def remove_member(plan_id):
+    db = current_app.db
+    plan = get_plan_or_403(db, plan_id, leader_only=True)
+
+    user_id = request.form.get("user_id", "")
+    if user_id == str(plan.get("leader_id")):
+        return jsonify({"error": "Can't remove the plan leader."}), 400
+
+    db.plans.update_one(
+        {"_id": ObjectId(plan_id)},
+        {"$pull": {"member_ids": ObjectId(user_id)}}
+    )
+    return jsonify({"ok": True})
 
 
 @plan_bp.route('/<plan_id>/delete', methods=['POST'])
