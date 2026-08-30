@@ -91,4 +91,23 @@
     </div>
 
   </form>
+
+  {% if trip and is_future_trip %}
+  <hr>
+  <div class="mb-1">
+    <label class="form-label fw-semibold"><i class="bi bi-piggy-bank-fill me-1"></i> Guardiola Project</label>
+    <form method="POST" action="{{ url_for('trip.link_project', trip_id=trip._id) }}" class="d-flex gap-2">
+      <select name="project_id" class="form-select">
+        <option value="">— Not linked —</option>
+        {% for p in available_projects %}
+        <option value="{{ p._id }}" {{ 'selected' if current_project_id == (p._id|string) else '' }}>
+          {{ p.name }}{{ ' (' ~ p.start_date.strftime('%Y') ~ ')' if p.start_date else '' }}
+        </option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-outline-primary text-nowrap">Save Link</button>
+    </form>
+    <small class="text-muted">Links this trip to a Guardiola project so its expenses show up here.</small>
+  </div>
+  {% endif %}
 </div>

@@ -1,0 +1,33 @@
+{# plan/_modal_members.html #}
+
+<div class="modal-header">
+  <h5 class="modal-title"><i class="bi bi-people-fill me-2"></i>Members</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+  <ul class="list-group mb-3">
+    {% for m in members %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span>
+        {{ m.name or m.email }}
+        {% if m._id == leader_id %}<span class="badge bg-secondary ms-1">Leader</span>{% endif %}
+      </span>
+      {% if is_leader and m._id != leader_id %}
+      <button type="button" class="btn btn-sm btn-outline-danger"
+              onclick="removePlanMember('{{ plan_id }}', '{{ m._id }}')">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+
+  {% if is_leader %}
+  <form id="addPlanMemberForm" class="d-flex gap-2" onsubmit="return submitAddPlanMember(event, '{{ plan_id }}')">
+    <input type="email" id="add-plan-member-email" class="form-control" placeholder="friend@email.com" required>
+    <button type="submit" class="btn btn-primary">Add</button>
+  </form>
+  <div id="add-plan-member-error" class="text-danger small mt-2"></div>
+  {% endif %}
+</div>

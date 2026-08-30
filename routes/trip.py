@@ -4,6 +4,7 @@ from flask import Blueprint, request, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from .utils import convert_to_USD, upload_image_to_cloudinary, DEFAULT_IMGS, ICON_MAP
 from .access import get_trip_or_403
+from .finance import get_household_id, list_travel_projects, get_trip_expenses, FIN_CATEGORIES, FIN_CATEGORY_KEYS
 from flask import current_app, render_template
 from bson import ObjectId
 from datetime import datetime
@@ -19,6 +20,8 @@ def serialize_trip(trip):
         trip['member_ids'] = [str(uid) for uid in trip['member_ids']]
     if trip.get('from_plan_id'):
         trip['from_plan_id'] = str(trip['from_plan_id'])
+    if trip.get('finance_project_id'):
+        trip['finance_project_id'] = str(trip['finance_project_id'])
     for activity in trip.get('activities', []):
         activity['id'] = str(activity['id'])
     return trip
@@ -84,13 +87,34 @@ def view_trip(trip_id):
         "accom_avg": category_avg.get("accommodation",0),
         "act_usd": round(category_totals.get("activity",0),2),
         "act_avg": category_avg.get("activity",0),
+        "other_usd": round(category_totals.get("other",0),2),
+        "other_avg": category_avg.get("other",0),
         "daily_category": category_daily,
         "total_category": category_totals,
         "total_per_day": total_per_day,
         "most_expensive_item": most_expensive_item,
-        "current_app": current_app
+        "current_app": current_app,
+        "fin_category_defs": FIN_CATEGORIES,
     }
     # --- FIM: cálculo de valores agregados ---
+
+    # --- INICIO: despesas reais do Guardiola, comparadas com o planejado
+    # (activities) categoria a categoria — só existe quando a viagem está
+    # linkada a um projeto (sempre viagens futuras, ver routes/home.py) ---
+    finance_expenses = None
+    if trip.get("finance_project_id"):
+        finance_expenses = get_trip_expenses(current_app.finance_db, trip["finance_project_id"])
+    context["finance_expenses"] = finance_expenses
+
+    if finance_expenses:
+        expected_category_totals = {key: round(category_totals.get(key, 0), 2) for key in FIN_CATEGORY_KEYS}
+        context["expected_category_totals"] = expected_category_totals
+        context["diff_category_totals"] = {
+            key: round(finance_expenses["category_totals"][key] - expected_category_totals[key], 2)
+            for key in FIN_CATEGORY_KEYS
+        }
+        context["diff_total_usd"] = round(finance_expenses["total_usd"] - round(total_usd, 2), 2)
+    # --- FIM: despesas reais do Guardiola ---
 
     trip = serialize_trip(trip)
     return render_template("trip_detail.html", **context)
@@ -180,7 +204,36 @@ def delete_info(trip_id, info_id):
 def edit_trip_form(trip_id):
     db = current_app.db
     trip = get_trip_or_403(db, trip_id)
-    return render_template("trip/_trip_form.html", trip=trip)
+
+    is_future_trip = trip["end_date"] >= datetime.now()
+    available_projects = []
+    if is_future_trip:
+        household_id = get_household_id(current_app.finance_db, current_user.email)
+        if household_id:
+            available_projects = list_travel_projects(current_app.finance_db, household_id)
+
+    return render_template(
+        "trip/_trip_form.html",
+        trip=trip,
+        is_future_trip=is_future_trip,
+        available_projects=available_projects,
+        current_project_id=str(trip["finance_project_id"]) if trip.get("finance_project_id") else "",
+    )
+
+
+@trip_bp.route("/<trip_id>/link_project", methods=["POST"])
+@login_required
+def link_project(trip_id):
+    db = current_app.db
+    get_trip_or_403(db, trip_id, leader_only=True)
+
+    project_id = request.form.get("project_id", "").strip()
+    if project_id:
+        db.trips.update_one({"_id": ObjectId(trip_id)}, {"$set": {"finance_project_id": ObjectId(project_id)}})
+    else:
+        db.trips.update_one({"_id": ObjectId(trip_id)}, {"$unset": {"finance_project_id": ""}})
+
+    return redirect(url_for("trip.view_trip", trip_id=trip_id))
 
 
 @trip_bp.route("/<trip_id>/members", methods=["GET"])

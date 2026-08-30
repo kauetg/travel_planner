@@ -102,6 +102,7 @@ h1, h2, h3 {
 .cat-accommodation  { background: #D63E54; }
 .cat-activity       { background: #F7E08A; color: #424242 !important; }
 .cat-food           { background: #76c3db; color: #424242 !important; }
+.cat-other          { background: #898781; }
 
 /* legacy tags (manter por compatibilidade) */
 .tag-transportation { background-color: #007bff; color: white; }
@@ -315,6 +316,9 @@ input[readonly], select[disabled], textarea[readonly] {
 
   --cat-food-bg:    #76c3db;
   --cat-food-color: #424242;
+
+  --cat-other-bg:    #898781;
+  --cat-other-color: #ffffff;
 }
 
 /* chips usam as variáveis */
@@ -322,6 +326,7 @@ input[readonly], select[disabled], textarea[readonly] {
 .cat-accommodation  { background: var(--cat-accommodation-bg);  color: var(--cat-accommodation-color);  }
 .cat-activity       { background: var(--cat-activity-bg);       color: var(--cat-activity-color);       }
 .cat-food           { background: var(--cat-food-bg);           color: var(--cat-food-color);           }
+.cat-other          { background: var(--cat-other-bg);          color: var(--cat-other-color);          }
 
 
 /* ════════════════════════════════════════════════════
@@ -438,6 +443,7 @@ input[readonly], select[disabled], textarea[readonly] {
   --cat-accommodation-tint:  rgba(214, 62, 84, 0.10);
   --cat-activity-tint:       rgba(247, 224, 138, 0.28);
   --cat-food-tint:           rgba(118, 195, 219, 0.16);
+  --cat-other-tint:          rgba(137, 135, 129, 0.14);
 }
 
 /* ════════════════════════════════════════════════════
@@ -461,6 +467,7 @@ input[readonly], select[disabled], textarea[readonly] {
 
 .fin-cat-grid {
   flex: 2 1 420px;
+  min-width: 0; /* sem isso o grid nunca encolhe abaixo de 5×150px e estoura o card */
   display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 0.85rem;
 }
@@ -470,13 +477,14 @@ input[readonly], select[disabled], textarea[readonly] {
   display: flex; align-items: center; gap: 0.7rem;
   background: #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.06);
 }
+.fin-cat-card > div { min-width: 0; } /* deixa o texto quebrar em vez de estourar o tile */
 .fin-cat-icon {
   width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 1.1rem;
 }
 .fin-cat-value { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
-.fin-cat-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.03em; }
+.fin-cat-label { font-size: 0.72rem; color: #888; text-transform: uppercase; letter-spacing: 0.03em; overflow-wrap: break-word; }
 .fin-cat-avg   { font-size: 0.7rem; color: #aaa; }
 
 /* ════════════════════════════════════════════════════
@@ -540,12 +548,54 @@ input[readonly], select[disabled], textarea[readonly] {
 .fin-heatmap tbody tr.cat-tint-accommodation td:not(.fin-heatmap-cat)  { background: var(--cat-accommodation-tint); }
 .fin-heatmap tbody tr.cat-tint-activity td:not(.fin-heatmap-cat)       { background: var(--cat-activity-tint); }
 .fin-heatmap tbody tr.cat-tint-food td:not(.fin-heatmap-cat)           { background: var(--cat-food-tint); }
+.fin-heatmap tbody tr.cat-tint-other td:not(.fin-heatmap-cat)          { background: var(--cat-other-tint); }
 
 .fin-heatmap tfoot td {
   font-size: 0.82rem; font-weight: 700; color: #363b40;
   padding: 0.5rem 0.4rem; text-align: center; border-top: 2px solid #eee;
 }
 .fin-heatmap tfoot td:first-child { text-align: left; }
+
+/* ════════════════════════════════════════════════════
+   FINANCE — Expected / Real / Difference toggle
+   (radios sao filhos diretos de .fin-body, ANTES dos .fin-panel, pra dar pra
+   usar ~ puro em CSS sem JS — ver .fin-toggle-input:checked abaixo)
+   ════════════════════════════════════════════════════ */
+.fin-toggle-input { position: absolute; opacity: 0; pointer-events: none; }
+
+.fin-toggle {
+  display: inline-flex; gap: 0.3rem;
+  background: #f1f2f4; border-radius: 999px;
+  padding: 0.25rem; margin-bottom: 1.2rem;
+}
+.fin-toggle-label {
+  padding: 0.4rem 0.95rem; border-radius: 999px;
+  font-size: 0.82rem; font-weight: 600; color: #777;
+  cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+#fin-expected:checked ~ .fin-toggle label[for="fin-expected"],
+#fin-real:checked     ~ .fin-toggle label[for="fin-real"],
+#fin-diff:checked     ~ .fin-toggle label[for="fin-diff"] {
+  background: #fff; color: #f0692a;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.fin-toggle ~ .fin-panel { display: none; }
+#fin-expected:checked ~ .fin-panel[data-fin-panel="expected"],
+#fin-real:checked     ~ .fin-panel[data-fin-panel="real"],
+#fin-diff:checked     ~ .fin-panel[data-fin-panel="diff"] {
+  display: block;
+}
+
+/* ════════════════════════════════════════════════════
+   FINANCE — Difference panel
+   ════════════════════════════════════════════════════ */
+.fin-total-card-over { background: linear-gradient(135deg, #d63e54, #b52f42); box-shadow: 0 6px 16px rgba(181, 47, 66, 0.28); }
+
+.fin-chart-wrap-wide { position: static; width: 100%; height: 240px; }
+
+.fin-diff-over  { color: #b52f42; font-weight: 700; }
+.fin-diff-under { color: #1baf7a; font-weight: 700; }
 
 /* ════════════════════════════════════════════════════
    FINANCE — full expenses table

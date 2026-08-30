@@ -24,6 +24,9 @@ app.config['SESSION_COOKIE_NAME'] = 'travelplanner_session'
 MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 app.db = client["travel_planner"]
+# Guardiola (app_financeiro) roda no mesmo cluster Atlas — acessamos o banco dele
+# direto (sem API) só pra ler/criar projetos e ler despesas, ver routes/finance.py.
+app.finance_db = client[os.getenv("FINANCE_DB_NAME", "finance_app")]
 app.config["MAPBOX_PUBLIC_TOKEN"] = os.environ.get("MAPBOX_PUBLIC_TOKEN")
 app.config["CARTO_API_KEY"] = os.environ.get("CARTO_API_KEY")
 

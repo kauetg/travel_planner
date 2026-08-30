@@ -5,6 +5,7 @@
   ('transportation', 'Transportation', 'bi-airplane-fill',   trans_usd,  trans_avg),
   ('accommodation',  'Accommodation',  'bi-house-door-fill', accom_usd,  accom_avg),
   ('activity',       'Activities',     'bi-camera-fill',     act_usd,    act_avg),
+  ('other',          'Others',         'bi-three-dots',      other_usd,  other_avg),
 ] %}
 
 {% set short_label = {
@@ -12,6 +13,7 @@
   'transportation': 'Transp',
   'accommodation': 'Accomm',
   'activity': 'Activities',
+  'other': 'Others',
 } %}
 
 <div class="section-card card mb-4">
@@ -21,109 +23,226 @@
   </div>
 
   <div class="collapse show" id="financesBody">
-    <div class="card-body">
+    <div class="card-body fin-body">
 
-      <!-- Resumo: total + por categoria -->
-      <div class="fin-summary-row mb-4">
-        <div class="fin-total-card">
-          <div class="fin-total-label">Total Trip Cost</div>
-          <div class="fin-total-value">USD {{ "%.2f"|format(total_usd) }}</div>
-          <div class="fin-total-avg">Avg {{ "%.2f"|format(avg_per_day) }}/day</div>
+      {% if finance_expenses %}
+      <input type="radio" name="finState" id="fin-expected" class="fin-toggle-input" checked>
+      <input type="radio" name="finState" id="fin-real" class="fin-toggle-input">
+      <input type="radio" name="finState" id="fin-diff" class="fin-toggle-input">
+      <div class="fin-toggle">
+        <label for="fin-expected" class="fin-toggle-label">Expected</label>
+        <label for="fin-real" class="fin-toggle-label">Real</label>
+        <label for="fin-diff" class="fin-toggle-label">Difference</label>
+      </div>
+      {% endif %}
+
+      <!-- ═══════════ PLANNED (from activities you added) ═══════════ -->
+      <div class="fin-panel" data-fin-panel="expected">
+
+        <div class="fin-summary-row mb-4">
+          <div class="fin-total-card">
+            <div class="fin-total-label">Total Trip Cost</div>
+            <div class="fin-total-value">USD {{ "%.2f"|format(total_usd) }}</div>
+            <div class="fin-total-avg">Avg {{ "%.2f"|format(avg_per_day) }}/day</div>
+          </div>
+
+          <div class="fin-cat-grid">
+            {% for key, label, icon, val, avg in fin_categories %}
+            <div class="fin-cat-card">
+              <div class="fin-cat-icon cat-{{ key }}"><i class="bi {{ icon }}"></i></div>
+              <div>
+                <div class="fin-cat-value">USD {{ "%.2f"|format(val) }}</div>
+                <div class="fin-cat-label" title="{{ label }}">{{ short_label.get(key, label) }}</div>
+                <div class="fin-cat-avg">Avg {{ "%.2f"|format(avg) }}/day</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
         </div>
 
-        <div class="fin-cat-grid">
-          {% for key, label, icon, val, avg in fin_categories %}
-          <div class="fin-cat-card">
-            <div class="fin-cat-icon cat-{{ key }}"><i class="bi {{ icon }}"></i></div>
-            <div>
-              <div class="fin-cat-value">USD {{ "%.2f"|format(val) }}</div>
-              <div class="fin-cat-label">{{ label }}</div>
-              <div class="fin-cat-avg">Avg {{ "%.2f"|format(avg) }}/day</div>
+        <!-- Gráfico + destaque -->
+        <div class="fin-chart-row mb-4">
+          <div class="fin-chart-wrap">
+            <canvas id="costByCategoryChart"></canvas>
+            <div class="fin-chart-center">
+              <div class="fin-chart-center-value">{{ "%.0f"|format(total_usd) }}</div>
+              <div class="fin-chart-center-label">USD total</div>
             </div>
           </div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <!-- Gráfico + destaque -->
-      <div class="fin-chart-row mb-4">
-        <div class="fin-chart-wrap">
-          <canvas id="costByCategoryChart"></canvas>
-          <div class="fin-chart-center">
-            <div class="fin-chart-center-value">{{ "%.0f"|format(total_usd) }}</div>
-            <div class="fin-chart-center-label">USD total</div>
+          <div class="fin-highlight-card">
+            <i class="bi bi-star-fill"></i>
+            <div>
+              <div class="fin-highlight-label">Most expensive</div>
+              <div class="fin-highlight-value">{{ most_expensive_item or "—" }}</div>
+            </div>
           </div>
         </div>
-        <div class="fin-highlight-card">
-          <i class="bi bi-star-fill"></i>
-          <div>
-            <div class="fin-highlight-label">Most expensive</div>
-            <div class="fin-highlight-value">{{ most_expensive_item or "—" }}</div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Heatmap por dia -->
-      <div class="fin-heatmap-wrap mb-4">
-        <table class="fin-heatmap">
-          <thead>
-            <tr>
-              <th></th>
-              {% for d in trip.dates %}<th>{{ trip.dates_formatted[loop.index0] }}</th>{% endfor %}
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for key, label, icon, val, avg in fin_categories %}
-            <tr class="cat-tint-{{ key }}">
-              <td class="fin-heatmap-cat">
-                <span class="cat-chip cat-{{ key }}" title="{{ label }}"><i class="bi {{ icon }}"></i></span>
-              </td>
-              {% for d in trip.dates %}
-              {% set v = daily_category[key][d] %}
-              <td class="fin-heatmap-cell {{ 'is-zero' if v == 0 }}">{{ "–" if v == 0 else "%.0f"|format(v) }}</td>
+        <!-- Heatmap por dia -->
+        <div class="fin-heatmap-wrap mb-4">
+          <table class="fin-heatmap">
+            <thead>
+              <tr>
+                <th></th>
+                {% for d in trip.dates %}<th>{{ trip.dates_formatted[loop.index0] }}</th>{% endfor %}
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for key, label, icon, val, avg in fin_categories %}
+              <tr class="cat-tint-{{ key }}">
+                <td class="fin-heatmap-cat">
+                  <span class="cat-chip cat-{{ key }}" title="{{ label }}"><i class="bi {{ icon }}"></i></span>
+                </td>
+                {% for d in trip.dates %}
+                {% set v = daily_category[key][d] %}
+                <td class="fin-heatmap-cell {{ 'is-zero' if v == 0 }}">{{ "–" if v == 0 else "%.0f"|format(v) }}</td>
+                {% endfor %}
+                <td class="fin-heatmap-total">{{ "%.2f"|format(total_category[key]) }}</td>
+              </tr>
               {% endfor %}
-              <td class="fin-heatmap-total">{{ "%.2f"|format(total_category[key]) }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td>Total</td>
-              {% for d in trip.dates %}<td>{{ "%.0f"|format(total_per_day[d]) }}</td>{% endfor %}
-              <td>{{ "%.2f"|format(total_usd) }}</td>
-            </tr>
-          </tfoot>
-        </table>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                {% for d in trip.dates %}<td>{{ "%.0f"|format(total_per_day[d]) }}</td>{% endfor %}
+                <td>{{ "%.2f"|format(total_usd) }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Tabela completa -->
+        <div class="table-responsive">
+          <table class="table table-striped table-hover fin-sortable" id="fullExpensesTable">
+            <thead>
+              <tr>
+                <th data-sort="text">Category</th>
+                <th data-sort="text">Title</th>
+                <th data-sort="number">USD</th>
+                <th data-sort="text">Type</th>
+                <th data-sort="text" data-sort-default="desc">Date</th>
+                <th data-sort="none">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for act in trip.activities %}
+              <tr>
+                <td data-label="Category" data-value="{{ act.category }}"><span class="cat-chip cat-{{ act.category }}"><i class="bi {{ act.icon }}"></i> {{ short_label.get(act.category, act.category) }}</span></td>
+                <td data-label="Title">{{ act.title }}</td>
+                <td data-label="USD" data-value="{{ act.cost_in_USD or 0 }}">{{ "%.2f"|format(act.cost_in_USD or 0) }}</td>
+                <td data-label="Type">{{ act.type }}</td>
+                <td data-label="Date">{{ act.start_date or "" }}</td>
+                <td data-label="Actions"><a href="#" class="btn btn-sm btn-outline-primary">Edit</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <!-- Tabela completa -->
-      <div class="table-responsive">
-        <table class="table table-striped table-hover fin-sortable" id="fullExpensesTable">
-          <thead>
-            <tr>
-              <th data-sort="text">Category</th>
-              <th data-sort="text">Title</th>
-              <th data-sort="number">USD</th>
-              <th data-sort="text">Type</th>
-              <th data-sort="text" data-sort-default="desc">Date</th>
-              <th data-sort="none">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for act in trip.activities %}
-            <tr>
-              <td data-label="Category" data-value="{{ act.category }}"><span class="cat-chip cat-{{ act.category }}"><i class="bi {{ act.icon }}"></i> {{ short_label.get(act.category, act.category) }}</span></td>
-              <td data-label="Title">{{ act.title }}</td>
-              <td data-label="USD" data-value="{{ act.cost_in_USD or 0 }}">{{ "%.2f"|format(act.cost_in_USD or 0) }}</td>
-              <td data-label="Type">{{ act.type }}</td>
-              <td data-label="Date">{{ act.start_date or "" }}</td>
-              <td data-label="Actions"><a href="#" class="btn btn-sm btn-outline-primary">Edit</a></td>
-            </tr>
+      {% if finance_expenses %}
+      <!-- ═══════════ REAL (actual spend, from Guardiola) ═══════════ -->
+      <div class="fin-panel" data-fin-panel="real">
+
+        <div class="fin-summary-row mb-4">
+          <div class="fin-total-card">
+            <div class="fin-total-label">Actual Spend</div>
+            <div class="fin-total-value">USD {{ "%.2f"|format(finance_expenses.total_usd) }}</div>
+          </div>
+
+          <div class="fin-cat-grid">
+            {% for key, label, icon in fin_category_defs %}
+            <div class="fin-cat-card">
+              <div class="fin-cat-icon cat-{{ key }}"><i class="bi {{ icon }}"></i></div>
+              <div>
+                <div class="fin-cat-value">USD {{ "%.2f"|format(finance_expenses.category_totals[key]) }}</div>
+                <div class="fin-cat-label" title="{{ label }}">{{ short_label.get(key, label) }}</div>
+              </div>
+            </div>
             {% endfor %}
-          </tbody>
-        </table>
+          </div>
+        </div>
+
+        {% if finance_expenses.transactions %}
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Description</th>
+                <th>USD</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in finance_expenses.transactions %}
+              <tr>
+                <td>{{ t.category }}</td>
+                <td>{{ t.description }}</td>
+                <td>{{ "%.2f"|format(t.amount_usd or 0) }}</td>
+                <td>{{ t.date.strftime('%d-%b-%Y') if t.date else '' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No expenses logged in Guardiola for this project yet.</p>
+        {% endif %}
       </div>
+
+      <!-- ═══════════ DIFFERENCE (real − expected, by category) ═══════════ -->
+      <div class="fin-panel" data-fin-panel="diff">
+
+        <div class="fin-summary-row mb-4">
+          <div class="fin-total-card {{ 'fin-total-card-over' if diff_total_usd > 0 }}">
+            <div class="fin-total-label">Real vs Expected</div>
+            <div class="fin-total-value">{{ "+" if diff_total_usd > 0 }}USD {{ "%.2f"|format(diff_total_usd) }}</div>
+            <div class="fin-total-avg">{{ "Over budget" if diff_total_usd > 0 else ("Under budget" if diff_total_usd < 0 else "Right on budget") }}</div>
+          </div>
+        </div>
+
+        <div class="fin-chart-wrap fin-chart-wrap-wide mb-4">
+          <canvas id="expectedVsRealChart"></canvas>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Expected</th>
+                <th>Real</th>
+                <th>Difference</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for key, label, icon in fin_category_defs %}
+              <tr>
+                <td><span class="cat-chip cat-{{ key }}"><i class="bi {{ icon }}"></i> {{ label }}</span></td>
+                <td>USD {{ "%.2f"|format(expected_category_totals[key]) }}</td>
+                <td>USD {{ "%.2f"|format(finance_expenses.category_totals[key]) }}</td>
+                <td class="{{ 'fin-diff-over' if diff_category_totals[key] > 0 else ('fin-diff-under' if diff_category_totals[key] < 0 else '') }}">
+                  {{ "+" if diff_category_totals[key] > 0 }}USD {{ "%.2f"|format(diff_category_totals[key]) }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td>USD {{ "%.2f"|format(total_usd) }}</td>
+                <td>USD {{ "%.2f"|format(finance_expenses.total_usd) }}</td>
+                <td class="{{ 'fin-diff-over' if diff_total_usd > 0 else ('fin-diff-under' if diff_total_usd < 0 else '') }}">
+                  {{ "+" if diff_total_usd > 0 }}USD {{ "%.2f"|format(diff_total_usd) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      {% endif %}
 
     </div>
   </div>
@@ -139,15 +258,16 @@ document.addEventListener('DOMContentLoaded', function() {
     transportation: style.getPropertyValue('--cat-transportation-bg').trim(),
     accommodation:  style.getPropertyValue('--cat-accommodation-bg').trim(),
     activity:       style.getPropertyValue('--cat-activity-bg').trim(),
+    other:          style.getPropertyValue('--cat-other-bg').trim(),
   };
 
   new Chart(document.getElementById('costByCategoryChart').getContext('2d'), {
     type: 'doughnut',
     data: {
-      labels: ['Food', 'Transportation', 'Accommodation', 'Activities'],
+      labels: ['Food', 'Transportation', 'Accommodation', 'Activities', 'Others'],
       datasets: [{
-        data: [{{ food_usd }}, {{ trans_usd }}, {{ accom_usd }}, {{ act_usd }}],
-        backgroundColor: [colors.food, colors.transportation, colors.accommodation, colors.activity],
+        data: [{{ food_usd }}, {{ trans_usd }}, {{ accom_usd }}, {{ act_usd }}, {{ other_usd }}],
+        backgroundColor: [colors.food, colors.transportation, colors.accommodation, colors.activity, colors.other],
         borderWidth: 0,
       }]
     },
@@ -198,5 +318,60 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Ordena por data (desc) ao carregar
   table.querySelector('th[data-sort-default="desc"]')?.click();
+
+  // Gráfico de barras Expected vs Real — só existe se a viagem tem projeto linkado.
+  // Criado sob demanda (1a vez que o toggle "Difference" é aberto), não no load:
+  // um canvas dentro de um painel escondido (display:none) tem largura 0 e o
+  // Chart.js congela nesse tamanho pra sempre.
+  const diffRadio = document.getElementById('fin-diff');
+  let diffChartCreated = false;
+
+  function createDiffChart() {
+    if (diffChartCreated) return;
+    diffChartCreated = true;
+    const canvas = document.getElementById('expectedVsRealChart');
+    if (!canvas) return;
+
+    new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['Food', 'Transportation', 'Accommodation', 'Activities', 'Others'],
+        datasets: [
+          {
+            label: 'Expected',
+            data: [
+              {{ expected_category_totals.food if expected_category_totals else 0 }},
+              {{ expected_category_totals.transportation if expected_category_totals else 0 }},
+              {{ expected_category_totals.accommodation if expected_category_totals else 0 }},
+              {{ expected_category_totals.activity if expected_category_totals else 0 }},
+              {{ expected_category_totals.other if expected_category_totals else 0 }},
+            ],
+            backgroundColor: '#c9ccd1',
+          },
+          {
+            label: 'Real',
+            data: [
+              {{ finance_expenses.category_totals.food if finance_expenses else 0 }},
+              {{ finance_expenses.category_totals.transportation if finance_expenses else 0 }},
+              {{ finance_expenses.category_totals.accommodation if finance_expenses else 0 }},
+              {{ finance_expenses.category_totals.activity if finance_expenses else 0 }},
+              {{ finance_expenses.category_totals.other if finance_expenses else 0 }},
+            ],
+            backgroundColor: '#ff914d',
+          },
+        ],
+      },
+      options: {
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true } },
+        plugins: { legend: { position: 'bottom' } },
+      },
+    });
+  }
+
+  if (diffRadio) {
+    diffRadio.addEventListener('change', createDiffChart);
+    if (diffRadio.checked) createDiffChart();
+  }
 });
 </script>

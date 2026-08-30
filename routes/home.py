@@ -5,6 +5,7 @@ from bson.json_util import dumps
 from datetime import datetime, timedelta
 from .utils import upload_image_to_cloudinary
 from .access import get_trip_or_403
+from .finance import get_household_id, create_project_for_trip
 
 home_bp = Blueprint('home', __name__)
 
@@ -113,6 +114,14 @@ def add_or_update_trip():
         update_data["member_ids"] = [ObjectId(current_user.id)]
         inserted = db.trips.insert_one(update_data)
         trip_id = str(inserted.inserted_id)
+
+        if end_datetime >= datetime.now():
+            household_id = get_household_id(current_app.finance_db, current_user.email)
+            if household_id:
+                project_id = create_project_for_trip(
+                    current_app.finance_db, household_id, name, start_datetime, end_datetime
+                )
+                db.trips.update_one({"_id": inserted.inserted_id}, {"$set": {"finance_project_id": project_id}})
 
         if source_plan:
             db.plans.update_one(
