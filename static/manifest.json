@@ -1,6 +1,6 @@
 {
-  "name": "Travel Planner",
-  "short_name": "Travel Planner",
+  "name": "Trip Planner",
+  "short_name": "Trip Planner",
   "description": "Planeje suas viagens: roteiros, atividades, hospedagem e finanças em um só lugar.",
   "start_url": "/",
   "scope": "/",

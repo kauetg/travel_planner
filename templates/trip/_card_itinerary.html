@@ -84,13 +84,10 @@
                     {% for a in acts_found %}
                     <div class="itinerary-block cat-{{ a.category }} {{ 'itinerary-unconfirmed' if not a.confirmed }}"
                          data-activity-id="{{ a.id }}"
+                         data-title="{{ a.title }}"
                          onclick="onBlockClick('{{ a.id }}', '{{ trip._id }}')">
                       <i class="bi {{ a.icon }}"></i>
                       <span>{{ a.title }}</span>
-                      <button class="block-x"
-                              onclick="event.stopPropagation(); unassignActivity('{{ a.id }}', '{{ trip._id }}', this)">
-                        ×
-                      </button>
                     </div>
                     {% endfor %}
                   </td>
@@ -105,7 +102,7 @@
       </div>
 
       <p class="text-muted small mt-3 mb-0" id="itineraryHint">
-        <i class="bi bi-info-circle me-1"></i> Click a block to view details. Drag an unscheduled activity onto a day to schedule it, click × to unschedule.
+        <i class="bi bi-info-circle me-1"></i> Click a block to view details. Drag an unscheduled activity onto a day to schedule it, right-click (or long-press on mobile) a block to unschedule it.
       </p>
 
     </div>
@@ -161,14 +158,49 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  window.unassignActivity = async function(activityId, tripId, btn) {
-    btn.disabled = true;
-    const resp = await fetch(`/trip/${tripId}/activity/${activityId}/unassign`, {
+  let unassigning = false;
+  async function unassignActivity(block) {
+    if (unassigning) return;
+    if (!confirm(`Unschedule "${block.dataset.title}"?`)) return;
+    unassigning = true;
+    const resp = await fetch(`/trip/${trip._id}/activity/${block.dataset.activityId}/unassign`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });
     if (resp.ok) location.reload();
-    else { alert('Failed to unassign.'); btn.disabled = false; }
-  };
+    else { alert('Failed to unassign.'); unassigning = false; }
+  }
+
+  // Desschedular: botão direito no desktop, long-press no celular
+  const LONG_PRESS_MS = 600;
+  document.querySelectorAll('.itinerary-block').forEach(block => {
+    let timer = null, longPressed = false, startX = 0, startY = 0;
+
+    block.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      if (!longPressed) unassignActivity(block);  // no touch o long-press já tratou
+    });
+
+    block.addEventListener('touchstart', e => {
+      longPressed = false;
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+      timer = setTimeout(() => {
+        longPressed = true;
+        if (navigator.vibrate) navigator.vibrate(30);
+        unassignActivity(block);
+      }, LONG_PRESS_MS);
+    }, { passive: true });
+
+    block.addEventListener('touchmove', e => {
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - startX) > 10 || Math.abs(t.clientY - startY) > 10) clearTimeout(timer);
+    }, { passive: true });
+
+    block.addEventListener('touchend', e => {
+      clearTimeout(timer);
+      if (longPressed) e.preventDefault();  // evita abrir o modal pelo click
+    });
+    block.addEventListener('touchcancel', () => clearTimeout(timer));
+  });
 });
 </script>

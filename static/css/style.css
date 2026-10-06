@@ -644,19 +644,11 @@ input[readonly], select[disabled], textarea[readonly] {
   white-space: nowrap; overflow: hidden;
   min-height: 36px; cursor: pointer;
   position: relative; margin-bottom: 2px;
+  -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
 }
 .itinerary-block span { overflow: hidden; text-overflow: ellipsis; flex: 1; }
 .itinerary-unconfirmed { opacity: 0.55; }
 
-.block-x {
-  flex-shrink: 0; background: rgba(0,0,0,0.2); border: none; color: #fff;
-  border-radius: 50%; width: 16px; height: 16px;
-  font-size: 0.6rem; display: flex;
-  align-items: center; justify-content: center;
-  cursor: pointer; line-height: 1; padding: 0;
-  opacity: 0.55; transition: opacity 0.15s;
-}
-.itinerary-block:hover .block-x { opacity: 1; }
 
 /* bancada */
 .itinerary-layout { display: flex; gap: 1rem; }
