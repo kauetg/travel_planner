@@ -217,12 +217,37 @@
         return calendar;
       }
 
+      // celular: nomes das viagens no rodapé de cada mês (os dias só ficam pintados)
+      function renderMonthFooters(year) {
+        calendarEl.querySelectorAll('.month-trips').forEach(el => el.remove());
+        if (!isMobile) return;
+        calendarEl.querySelectorAll('.fc-multimonth-month').forEach(monthEl => {
+          const ym = monthEl.dataset.date;            // "2026-03"
+          if (!ym || !ym.startsWith(String(year))) return;
+          const inMonth = trips.filter(t =>
+            t.year == year && t.dates.some(d => d.slice(0, 7) === ym));
+          if (!inMonth.length) return;
+          const footer = document.createElement('div');
+          footer.className = 'month-trips';
+          inMonth.forEach(t => {
+            const days = t.dates.filter(d => d.slice(0, 7) === ym).map(d => +d.slice(8, 10));
+            const range = days.length > 1 ? `${days[0]}–${days[days.length - 1]}` : `${days[0]}`;
+            const a = document.createElement('a');
+            a.href = `/trip/${t._id}`;
+            a.innerHTML = `<span class="month-trip-days">${range}</span> ${t.name}`;
+            footer.appendChild(a);
+          });
+          monthEl.appendChild(footer);
+        });
+      }
+
       function updateCalendar(year) {
         const cal = ensureCalendar();
         cal.removeAllEvents();
         cal.addEventSource(tripsToEvents(year));
         cal.gotoDate(`${year}-01-01`);
         cal.updateSize();
+        renderMonthFooters(year);
       }
 
       // ── MAPA ─────────────────────────────────────────

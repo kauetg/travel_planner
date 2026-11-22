@@ -40,6 +40,13 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(plan_bp, url_prefix="/plan")
 
 
+@app.context_processor
+def asset_version():
+    # versão = mtime do style.css: muda a URL a cada deploy e fura o cache-first do service worker
+    css = os.path.join(app.static_folder, "css", "style.css")
+    return {"css_version": int(os.path.getmtime(css))}
+
+
 @app.route("/sw.js")
 def service_worker():
     response = send_from_directory(app.static_folder, "sw.js")

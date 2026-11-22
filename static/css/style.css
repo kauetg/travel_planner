@@ -241,6 +241,12 @@ h1, h2, h3 {
   #calendar .fc-multimonth-month { padding: 0 2px; }
   #calendar .fc-bg-event { opacity: 0.75; }
   #calendar .fc-bg-event .fc-event-title { display: none; }
+  #calendar .month-trips { padding: 3px 2px 4px; display: flex; flex-direction: column; gap: 2px; }
+  #calendar .month-trips a {
+    font-size: 0.6rem; line-height: 1.2; color: #333;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #calendar .month-trip-days { color: #ff914d; font-weight: 700; }
 }
 .trip-day { background-color: #e74c3c !important; color: white !important; border-radius: 6px; }
 
