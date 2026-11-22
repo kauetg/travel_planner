@@ -232,6 +232,16 @@ h1, h2, h3 {
   font-size: 2rem !important; font-weight: 600 !important; letter-spacing: 0.15em;
 }
 .fc-multimonth-month { min-width: 0 !important; }
+@media (max-width: 768px) {
+  #calendar { font-size: 0.55rem; }
+  #calendar .fc-multimonth-title { font-size: 1.1rem !important; letter-spacing: 0.05em; padding: 0.4em 0 0.2em; }
+  #calendar .fc-multimonth-daygrid-table .fc-daygrid-day-frame { min-height: 0; }
+  #calendar .fc-daygrid-day-number { padding: 1px; }
+  #calendar .fc-col-header-cell-cushion { padding: 1px 0; }
+  #calendar .fc-multimonth-month { padding: 0 2px; }
+  #calendar .fc-bg-event { opacity: 0.75; }
+  #calendar .fc-bg-event .fc-event-title { display: none; }
+}
 .trip-day { background-color: #e74c3c !important; color: white !important; border-radius: 6px; }
 
 

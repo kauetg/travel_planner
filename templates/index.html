@@ -167,6 +167,9 @@
       });
 
       // ── FULLCALENDAR ─────────────────────────────────
+      // no celular os dias ficam pequenos demais pra barras com nome: pinta o fundo do dia
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
       function tripsToEvents(year) {
         return trips
           .filter(t => t.year == year)
@@ -179,6 +182,7 @@
               end:   endDate.toISOString().split('T')[0],
               url:   `/trip/${t._id}`,
               color: '#ff914d',
+              display: isMobile ? 'background' : 'auto',
             };
           });
       }
@@ -188,14 +192,22 @@
 
       function ensureCalendar() {
         if (calendar) return calendar;
-        const isMobile = window.matchMedia('(max-width: 768px)').matches;
         calendar = new FullCalendar.Calendar(calendarEl, {
-          initialView: isMobile ? 'dayGridMonth' : 'multiMonthYear',
-          multiMonthMaxColumns: 4,
-          headerToolbar: isMobile ? { left: 'prev', center: 'title', right: 'next' } : false,
+          // vista anual sempre: 4x3 no desktop, 3x4 no celular
+          initialView: 'multiMonthYear',
+          multiMonthMaxColumns: isMobile ? 3 : 4,
+          multiMonthMinWidth: isMobile ? 90 : 200,
+          showNonCurrentDates: false,
+          fixedWeekCount: false,
+          headerToolbar: false,
           eventClick: function(info) {
             info.jsEvent.preventDefault();
             if (info.event.url) window.location.href = info.event.url;
+          },
+          // eventos de fundo (celular) não recebem clique: abre a viagem do dia tocado
+          dateClick: function(info) {
+            const ev = calendar.getEvents().find(e => e.start <= info.date && info.date < e.end);
+            if (ev && ev.url) window.location.href = ev.url;
           },
           multiMonthTitleFormat: { month: 'short' },
           height: 'auto',
@@ -281,10 +293,11 @@
         });
       }
 
-      // ── NAVEGAÇÃO DE ANO (só anos com viagem, começando em "All Trips") ──
+      // ── NAVEGAÇÃO DE ANO (só anos com viagem; "All Trips" fica depois do ano mais recente,
+      //    então a seta ‹ leva pro ano mais recente) ──
       const years = [...new Set(trips.map(t => t.year))].sort((a, b) => a - b);
-      const states = ['all', ...years];
-      let stateIdx = 0;
+      const states = [...years, 'all'];
+      let stateIdx = states.length - 1;
 
       const yearLabel = document.getElementById('yearLabel');
       const prevBtn   = document.getElementById('yearPrev');
